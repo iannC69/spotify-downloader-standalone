@@ -9,6 +9,8 @@ import {
 import Tilt from 'react-parallax-tilt';
 import Navbar from '../components/Navbar';
 import LiveStatus from '../components/LiveStatus';
+import InteractiveTerminal from '../components/InteractiveTerminal';
+import SteamWidget from '../components/SteamWidget';
 import './Home.css';
 
 // Lista de jocuri pe care IANNC o poate edita ușor
@@ -141,13 +143,10 @@ function Home() {
                     <h4>Update Maker</h4>
                   </div>
                   <p>Generator automat de Patch Notes pentru serverele de Discord. Formatează update-urile și menține comunitatea informată cu un design impecabil.</p>
-                  <Link to="/tools/update-maker" className="btn btn-primary" style={{alignSelf: 'flex-start', marginBottom: '1.5rem'}}>
+                  <Link to="/tools/update-maker" className="btn btn-primary" style={{alignSelf: 'flex-start', marginBottom: '0.5rem'}}>
                     Deschide Aplicația <ArrowRight size={16}/>
                   </Link>
-                  <div className="mock-window">
-                    <div className="mock-header"><span></span><span></span><span></span></div>
-                    <div className="mock-body"><code>/update title:"v2.4 Live"</code><code>{'>'} Generând patch notes...</code><code>{'>'} Succes! Trimis pe canal.</code></div>
-                  </div>
+                  <InteractiveTerminal />
                 </motion.div>
               </Tilt>
 
@@ -225,6 +224,8 @@ function Home() {
                 </div>
               </div>
             </motion.div>
+            
+            <SteamWidget />
           </div>
         </motion.section>
 

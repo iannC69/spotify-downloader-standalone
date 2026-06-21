@@ -1,23 +1,21 @@
 .status-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.75rem;
-  background: rgba(255, 255, 255, 0.05);
-  padding: 0.5rem 1rem;
-  border-radius: 100px;
+  gap: 8px;
+  background-color: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #fff;
+  padding: 8px 16px;
+  border-radius: 50px;
   font-size: 0.9rem;
-  font-weight: 600;
-  backdrop-filter: blur(10px);
-  margin-top: 1rem;
-  margin-bottom: 2rem;
+  font-weight: 500;
+  color: #fff;
   transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
 }
 
 .status-badge:hover {
-  background: rgba(255, 255, 255, 0.1);
-  transform: translateY(-2px);
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .status-dot {
@@ -31,4 +29,86 @@
   0% { transform: scale(0.95); opacity: 0.8; }
   50% { transform: scale(1.1); opacity: 1; }
   100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+/* --- Spotify EQ, Marquee & Last.fm --- */
+.spotify-active {
+  border-color: rgba(29, 185, 84, 0.3);
+  background: rgba(29, 185, 84, 0.05);
+  overflow: hidden;
+  max-width: 280px; /* Constrain width to enable marquee */
+  padding-left: 6px;
+}
+
+.spotify-active:hover {
+  background: rgba(29, 185, 84, 0.1);
+  border-color: rgba(29, 185, 84, 0.5);
+  box-shadow: 0 0 15px rgba(29, 185, 84, 0.2);
+}
+
+.album-art-mini {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+.album-art-mini img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  animation: spin 8s linear infinite;
+}
+
+@keyframes spin {
+  100% { transform: rotate(360deg); }
+}
+
+.audio-eq {
+  display: flex;
+  align-items: flex-end;
+  height: 14px;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.audio-eq span {
+  width: 3px;
+  background-color: #1db954;
+  border-radius: 1px;
+  animation: eq-bounce 1.2s ease infinite alternate;
+}
+
+.audio-eq span:nth-child(1) { height: 60%; animation-delay: 0.1s; }
+.audio-eq span:nth-child(2) { height: 100%; animation-delay: 0.3s; }
+.audio-eq span:nth-child(3) { height: 40%; animation-delay: 0.5s; }
+.audio-eq span:nth-child(4) { height: 80%; animation-delay: 0.2s; }
+
+@keyframes eq-bounce {
+  10% { height: 20%; }
+  30% { height: 100%; }
+  60% { height: 40%; }
+  80% { height: 80%; }
+  100% { height: 60%; }
+}
+
+.spotify-text-marquee {
+  white-space: nowrap;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+.spotify-text-marquee span {
+  display: inline-block;
+  padding-left: 100%;
+  animation: marquee 15s linear infinite;
+  color: #1db954;
+}
+
+@keyframes marquee {
+  0%   { transform: translate(0, 0); }
+  100% { transform: translate(-100%, 0); }
 }

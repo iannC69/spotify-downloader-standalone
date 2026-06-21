@@ -1,0 +1,134 @@
+.steam-widget {
+  background: linear-gradient(135deg, rgba(23, 26, 33, 0.9) 0%, rgba(31, 35, 41, 0.9) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 1.5rem;
+  color: #fff;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+  margin-top: 2rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.steam-widget::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 150px;
+  height: 150px;
+  background: radial-gradient(circle, rgba(102, 192, 244, 0.1) 0%, transparent 70%);
+  transform: translate(50%, -50%);
+}
+
+.steam-widget:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1);
+  border-color: rgba(102, 192, 244, 0.3);
+}
+
+.steam-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.steam-user {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.steam-avatar {
+  position: relative;
+  width: 56px;
+  height: 56px;
+}
+
+.steam-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 2px solid #2a475e;
+}
+
+.status-ring {
+  position: absolute;
+  inset: -4px;
+  border: 2px solid transparent;
+  border-radius: 10px;
+}
+
+.status-ring.in-game {
+  border-color: #90ba3c;
+  box-shadow: 0 0 10px rgba(144, 186, 60, 0.4);
+}
+
+.steam-info h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.steam-status {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #90ba3c !important; /* Force Steam Green */
+  font-weight: 600;
+}
+
+.steam-logo {
+  color: #66c0f4;
+  opacity: 0.8;
+}
+
+.steam-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.steam-stat-box {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 1rem;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.5rem;
+  border: 1px solid rgba(255,255,255,0.02);
+}
+
+.steam-stat-box svg {
+  color: #8f98a0;
+}
+
+.stat-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #c7d5e0;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: #8f98a0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.steam-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #8f98a0;
+  font-weight: 500;
+}

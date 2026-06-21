@@ -55,6 +55,40 @@
   --border-color: rgba(210, 255, 0, 0.08);
 }
 
+/* --- Spotify Global Background --- */
+#spotify-global-bg {
+  position: fixed;
+  inset: -20%; /* Mult mai mare pentru a permite miscarea */
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+  filter: blur(100px) brightness(0.3) saturate(1.5);
+  opacity: 0;
+  transition: opacity 1.5s ease-in-out, background-image 1.5s ease-in-out;
+  pointer-events: none;
+  animation: spotify-liquid 15s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center center;
+}
+
+@keyframes spotify-liquid {
+  0% { 
+    transform: scale(1) translate(0, 0) rotate(0deg); 
+    filter: blur(100px) brightness(0.3) saturate(1.5) hue-rotate(0deg);
+  }
+  33% {
+    transform: scale(1.1) translate(2%, 2%) rotate(1deg);
+    filter: blur(80px) brightness(0.5) saturate(2) hue-rotate(15deg);
+  }
+  66% {
+    transform: scale(1.05) translate(-2%, 1%) rotate(-1deg);
+    filter: blur(120px) brightness(0.4) saturate(1.8) hue-rotate(-10deg);
+  }
+  100% { 
+    transform: scale(1.15) translate(-1%, -2%) rotate(2deg); 
+    filter: blur(90px) brightness(0.5) saturate(2.2) hue-rotate(5deg);
+  }
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -78,6 +112,8 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  position: relative;
+  z-index: 1;
 }
 
 .app-container {

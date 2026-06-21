@@ -1,0 +1,123 @@
+.interactive-terminal {
+  background-color: #0d1117;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+  font-family: 'Fira Code', 'Courier New', Courier, monospace;
+  font-size: 0.85rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  height: 200px;
+  cursor: text;
+  transition: border-color 0.3s;
+}
+
+.interactive-terminal:hover,
+.interactive-terminal:focus-within {
+  border-color: var(--primary);
+}
+
+.terminal-header {
+  background-color: #161b22;
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  position: relative;
+}
+
+.terminal-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.dot-red { background-color: #ff5f56; }
+.dot-yellow { background-color: #ffbd2e; }
+.dot-green { background-color: #27c93f; }
+
+.terminal-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #8b949e;
+  font-size: 0.8rem;
+}
+
+.terminal-body {
+  padding: 1rem;
+  flex-grow: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.terminal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.terminal-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.terminal-line {
+  word-break: break-all;
+}
+
+.terminal-line.input {
+  color: #fff;
+}
+
+.terminal-line.input::before {
+  content: "iannc@cli:~$ ";
+  color: var(--primary);
+  margin-right: 8px;
+}
+
+.terminal-line.output {
+  color: #8b949e;
+}
+
+.terminal-line.success {
+  color: #3fb950;
+}
+
+.terminal-line.error {
+  color: #f85149;
+}
+
+.terminal-input-row {
+  display: flex;
+  align-items: center;
+  margin-top: 0.2rem;
+}
+
+.terminal-prompt {
+  color: var(--primary);
+  margin-right: 8px;
+  white-space: nowrap;
+}
+
+.terminal-input {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-family: inherit;
+  font-size: inherit;
+  outline: none;
+  flex-grow: 1;
+  width: 100%;
+}
+
+.terminal-input:disabled {
+  opacity: 0.5;
+}
