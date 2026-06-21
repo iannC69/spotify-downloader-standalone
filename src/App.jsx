@@ -3,7 +3,6 @@ import { useEffect } from 'react';
 import Home from './pages/Home';
 import UpdateMaker from './pages/UpdateMaker';
 import Admin from './pages/Admin';
-import CustomCursor from './components/CustomCursor';
 import CommandPalette from './components/CommandPalette';
 
 function App() {
