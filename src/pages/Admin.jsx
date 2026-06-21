@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Settings, Droplet, Monitor, Terminal, Activity, Zap, Cpu } from 'lucide-react';
+import { Settings, Droplet, Monitor, Terminal, Activity, Zap, Cpu, Gamepad2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import './Admin.css';
 
@@ -131,6 +132,27 @@ function Admin() {
                     <code><span className="text-primary">root@system:</span> tail -f access.log</code>
                     <code>{'>'} Traffic normal. No anomalies detected.</code>
                   </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Game Library Admin Module */}
+            <motion.div 
+              className="admin-card"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <div className="card-header">
+                <h2><Gamepad2 size={24} className="text-primary"/> IGDB Game Library</h2>
+              </div>
+              <div className="card-body">
+                <p className="card-desc">Caută și adaugă manual jocuri în portofoliul tău public, folosind baza de date globală Twitch (IGDB).</p>
+                
+                <div style={{ marginTop: '1.5rem' }}>
+                  <Link to="/admin/games" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+                    Deschide Admin Librărie Jocuri
+                  </Link>
                 </div>
               </div>
             </motion.div>

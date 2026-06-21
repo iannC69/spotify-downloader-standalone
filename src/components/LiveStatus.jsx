@@ -37,28 +37,12 @@ export default function LiveStatus() {
     return () => clearInterval(interval);
   }, []);
 
-  // Global Dynamic Background Logic
   useEffect(() => {
     if (typeof document === 'undefined') return;
-    
-    let bgElement = document.getElementById('spotify-global-bg');
-    if (!bgElement) {
-      bgElement = document.createElement('div');
-      bgElement.id = 'spotify-global-bg';
-      document.body.insertBefore(bgElement, document.body.firstChild);
-    }
 
-    if (song && song.albumArt) {
-      bgElement.style.opacity = '1';
-      bgElement.style.backgroundImage = `url(${song.albumArt})`;
-    } else {
-      bgElement.style.opacity = '0';
-    }
-
-    return () => {
-      if (bgElement) bgElement.style.opacity = '0';
-    };
-  }, [song]);
+    const legacyBgElement = document.getElementById('spotify-global-bg');
+    if (legacyBgElement) legacyBgElement.remove();
+  }, []);
   
   if (song) {
     const activityText = `${song.title} - ${song.artist}`;

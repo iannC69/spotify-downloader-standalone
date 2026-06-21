@@ -1,0 +1,38 @@
+[
+  {
+    "id": 242408,
+    "name": "Counter-Strike 2",
+    "playtimeHours": 6245,
+    "imageUrl": "https://images.igdb.com/igdb/image/upload/t_1080p/coaczd.jpg"
+  },
+  {
+    "id": 239064,
+    "name": "Grand Theft Auto V",
+    "playtimeHours": 1000,
+    "imageUrl": "https://images.igdb.com/igdb/image/upload/t_1080p/co9751.jpg"
+  },
+  {
+    "id": 141114,
+    "name": "007 First Light",
+    "playtimeHours": 17,
+    "imageUrl": "https://images.igdb.com/igdb/image/upload/t_1080p/coaoiz.jpg"
+  },
+  {
+    "id": 141503,
+    "name": "Forza Horizon 5",
+    "playtimeHours": 44,
+    "imageUrl": "https://images.igdb.com/igdb/image/upload/t_1080p/co3ofx.jpg"
+  },
+  {
+    "id": 214414,
+    "name": "Where Winds Meet",
+    "playtimeHours": 10,
+    "imageUrl": "https://images.igdb.com/igdb/image/upload/t_1080p/coauhs.jpg"
+  },
+  {
+    "id": 135400,
+    "name": "Minecraft",
+    "playtimeHours": 15000,
+    "imageUrl": "https://images.igdb.com/igdb/image/upload/t_1080p/co8fu7.jpg"
+  }
+]

@@ -1,37 +1,18 @@
 import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { 
-  Gamepad2, GitBranch, Camera, Video, 
-  ArrowRight, ShieldCheck, BadgeCheck, Activity, Map, Server, 
-  Cpu, ChevronDown, Layers, Mail, Code, Bot, Globe, ExternalLink, LayoutList
+import {
+  Gamepad2, GitBranch, Camera, Video,
+  ArrowRight, BadgeCheck, Server,
+  Cpu, ChevronDown, Layers, Mail, Code, Bot, Globe, ExternalLink, LayoutList,
+  MonitorPlay, MemoryStick, CircuitBoard, Mouse, Keyboard, Headphones, Monitor
 } from 'lucide-react';
 import Tilt from 'react-parallax-tilt';
 import Navbar from '../components/Navbar';
 import LiveStatus from '../components/LiveStatus';
-import InteractiveTerminal from '../components/InteractiveTerminal';
-import SteamWidget from '../components/SteamWidget';
+import myGames from '../data/myGames.json';
 import './Home.css';
 
-// Lista de jocuri pe care IANNC o poate edita ușor
-const playedGames = [
-  'CS2',
-  'Fortnite',
-  'First Light 007',
-  'Minecraft'
-];
-
-// O funcție mică ca să tragă o poză mișto dacă recunoaște jocul, sau un placeholder automat.
-const getGameCover = (gameName) => {
-  const name = gameName.toLowerCase();
-  if (name.includes('cs2') || name.includes('csgo')) return 'https://cdn.cloudflare.steamstatic.com/steam/apps/730/library_600x900_2x.jpg';
-  if (name.includes('fortnite')) return 'https://cdn2.unrealengine.com/egs-fortnite-core-1200x1600-b33a82ee20fb.jpg';
-  if (name.includes('minecraft')) return 'https://m.media-amazon.com/images/M/MV5BMjA5MWZlMGMtMjFhOS00ODg1LWIxMDQtOTMyYWQyYTNlOWRmXkEyXkFqcGdeQXVyNTgyNTA4MjM@._V1_FMjpg_UX1000_.jpg';
-  if (name.includes('first light')) return 'https://images.igdb.com/igdb/image/upload/t_cover_big/co685n.png'; // Placeholder general
-  
-  // Dacă adaugă un joc nou, face o copertă automată cu numele pe ea.
-  return `https://placehold.co/600x900/111214/D2FF00?text=${encodeURIComponent(gameName)}`;
-};
 
 function Home() {
   const { scrollYProgress } = useScroll();
@@ -42,10 +23,10 @@ function Home() {
 
   const sectionVariants = {
     hidden: { opacity: 0, y: 50 },
-    visible: { 
-      opacity: 1, 
-      y: 0, 
-      transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1], staggerChildren: 0.15 } 
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1], staggerChildren: 0.15 }
     }
   };
 
@@ -57,9 +38,9 @@ function Home() {
   return (
     <>
       <Navbar />
-      
+
       <div className="home-container">
-        
+
         {/* Animated Background (Pure Green Depth) */}
         <div className="animated-bg">
           <motion.div style={{ y }} className="bg-stars"></motion.div>
@@ -71,7 +52,7 @@ function Home() {
         <section className="story-section hero-section">
           <div className="hero-split">
             {/* Left: Text & Titles */}
-            <motion.div 
+            <motion.div
               className="hero-text-side"
               initial="hidden"
               animate="visible"
@@ -81,40 +62,65 @@ function Home() {
                 <LiveStatus />
               </motion.div>
               <motion.h1 className="hero-title-left" variants={itemVariants}>
-                Salut, <br/>
-                sunt IANNC <BadgeCheck size={42} className="verified-badge" />
+                Salut, sunt <span className="text-gradient">IANNC</span> <BadgeCheck size={42} className="verified-badge" />
               </motion.h1>
               <motion.p className="hero-subtitle-left" variants={itemVariants}>
                 Dezvoltator web full-stack și Community Manager.
                 Aduc proiecte la viață prin cod curat, design premium și o conexiune reală cu audiența.
               </motion.p>
-              
+
               <motion.div className="hero-action-buttons" variants={itemVariants}>
-                <a href="#projects" className="btn btn-primary">Vezi Proiectele <ArrowRight size={18} /></a>
+                <a href="#proiecte" className="btn btn-primary">Vezi Proiectele <ArrowRight size={18} /></a>
                 <a href="#socials" className="btn btn-secondary">Contact <Mail size={18} /></a>
               </motion.div>
             </motion.div>
 
-            {/* Right: Floating Avatar */}
-            <motion.div 
+            {/* Right: Glass Bento Hero Card */}
+            <motion.div
               className="hero-image-side"
-              initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
-              animate={{ opacity: 1, scale: 1, rotate: 0 }}
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
             >
-              <div className="hero-image-wrapper">
-                <div className="hero-image-glow"></div>
-                <img 
-                  src="https://github.com/iannC69.png" 
-                  alt="IANNC Avatar" 
-                  className="hero-image-floating"
-                  onError={(e) => { e.target.src = 'https://cdn.akamai.steamstatic.com/steamcommunity/public/images/avatars/fe/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_full.jpg'; }}
-                />
-              </div>
+              <Tilt className="hero-glass-bento" tiltMaxAngleX={3} tiltMaxAngleY={3} glareEnable={true} glareMaxOpacity={0.1}>
+                {/* Floating mini badges */}
+                <motion.div className="floating-badge badge-react" animate={{ y: [0, -10, 0] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}>
+                  <Code size={20} />
+                </motion.div>
+                <motion.div className="floating-badge badge-bot" animate={{ y: [0, 15, 0] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}>
+                  <Bot size={24} />
+                </motion.div>
+
+                <div className="glass-bento-inner">
+                  <div className="glass-bento-glow"></div>
+                  
+                  <div className="bento-avatar-container">
+                    <img
+                      src="https://github.com/iannC69.png"
+                      alt="IANNC Avatar"
+                      className="bento-avatar-img"
+                      onError={(e) => { e.target.src = 'https://cdn.akamai.steamstatic.com/steamcommunity/public/images/avatars/fe/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_full.jpg'; }}
+                    />
+                    <div className="bento-status-ring"></div>
+                  </div>
+
+                  <div className="bento-stats-container">
+                    <div className="bento-stat-item">
+                      <span className="stat-value">03</span>
+                      <span className="stat-label">Live Apps</span>
+                    </div>
+                    <div className="bento-stat-item">
+                      <span className="stat-value">99%</span>
+                      <span className="stat-label">Uptime</span>
+                    </div>
+                  </div>
+
+                </div>
+              </Tilt>
             </motion.div>
           </div>
-          
-          <motion.div 
+
+          <motion.div
             className="scroll-indicator"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1, y: [0, 10, 0] }}
@@ -129,164 +135,206 @@ function Home() {
         {/* 2. PROIECTE */}
         <section id="proiecte" className="story-section">
           <div className="section-container">
-            <motion.h2 className="section-heading" variants={itemVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-              <Code size={36} className="heading-icon-svg text-warning" /> Cod & Creații
-            </motion.h2>
-            
+            <motion.div className="projects-section-header" variants={itemVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+              <div className="projects-heading-copy">
+                <span className="projects-kicker">Projects / Tools</span>
+                <h2 className="section-heading projects-heading">
+                  <Code size={32} className="heading-icon-svg text-warning" /> Cod & Creații
+                </h2>
+                <p className="section-description compact-projects-copy">
+                  Aplicații live, făcute pentru comunitate și workflow real: update-uri Discord, task management și platforme web active.
+                </p>
+              </div>
+
+              <div className="projects-overview" aria-label="Rezumat proiecte">
+                <div>
+                  <strong>03</strong>
+                  <span>Live</span>
+                </div>
+                <div>
+                  <strong>02</strong>
+                  <span>Tools</span>
+                </div>
+                <div>
+                  <strong>01</strong>
+                  <span>Website</span>
+                </div>
+              </div>
+            </motion.div>
+
             <div className="projects-grid bento-projects">
               {/* Featured Project: Update Maker */}
               <Tilt className="tilt-wrapper" tiltMaxAngleX={4} tiltMaxAngleY={4} glareEnable={true} glareMaxOpacity={0.1} scale={1.02} transitionSpeed={1500}>
-                <motion.div className="story-card project-card featured-project" variants={itemVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-                  <span className="project-tag">LIVE APP</span>
-                  <div className="project-header">
-                    <Bot size={32} className="text-primary" />
-                    <h4>Update Maker</h4>
+                <motion.div className="story-card project-card compact-project-card featured-project" variants={itemVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+                  <div className="project-card-top">
+                    <span className="project-tag">LIVE APP</span>
+                    <span className="project-status-pill">Online</span>
                   </div>
-                  <p>Generator automat de Patch Notes pentru serverele de Discord. Formatează update-urile și menține comunitatea informată cu un design impecabil.</p>
-                  <Link to="/tools/update-maker" className="btn btn-primary" style={{alignSelf: 'flex-start', marginBottom: '0.5rem'}}>
-                    Deschide Aplicația <ArrowRight size={16}/>
+                  <div className="project-header">
+                    <div className="project-icon-box primary">
+                      <Bot size={24} />
+                    </div>
+                    <div>
+                      <h4>Update Maker</h4>
+                      <span>Discord patch notes</span>
+                    </div>
+                  </div>
+                  <p>Generator de update-uri pentru Discord, cu template-uri, preview si export imagine.</p>
+                  <div className="project-feature-row">
+                    <span>Templates</span>
+                    <span>Preview</span>
+                    <span>Export PNG</span>
+                  </div>
+                  <Link to="/tools/update-maker" className="project-action-link">
+                    Deschide <ArrowRight size={16} />
                   </Link>
-                  <InteractiveTerminal />
                 </motion.div>
               </Tilt>
 
               {/* Project: IncLounge.top */}
               <Tilt className="tilt-wrapper" tiltMaxAngleX={4} tiltMaxAngleY={4} glareEnable={true} glareMaxOpacity={0.1} scale={1.02} transitionSpeed={1500}>
-                <motion.div className="story-card project-card" variants={itemVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-                  <span className="project-tag" style={{color: '#a855f7', background: 'rgba(168,85,247,0.2)'}}>WEBSITE</span>
-                  <div className="project-header">
-                    <Globe size={32} className="text-purple" style={{color: '#a855f7'}} />
-                    <h4>IncLounge.top</h4>
+                <motion.div className="story-card project-card compact-project-card" variants={itemVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+                  <div className="project-card-top">
+                    <span className="project-tag purple">WEBSITE</span>
+                    <span className="project-status-pill">Live</span>
                   </div>
-                  <p>Platforma principală web, un hub exclusiv deținut și administrat direct. Design modern, performanță rapidă și o comunitate în continuă creștere.</p>
-                  <a href="https://inclounge.top" target="_blank" rel="noreferrer" className="btn btn-secondary" style={{marginTop: 'auto', alignSelf: 'flex-start'}}>
-                    Vizitează Site-ul <ExternalLink size={16}/>
+                  <div className="project-header">
+                    <div className="project-icon-box purple">
+                      <Globe size={24} />
+                    </div>
+                    <div>
+                      <h4>IncLounge.top</h4>
+                      <span>Community hub</span>
+                    </div>
+                  </div>
+                  <p>Platforma principala pentru comunitate, cu identitate proprie si acces rapid.</p>
+                  <div className="project-feature-row">
+                    <span>Website</span>
+                    <span>Community</span>
+                    <span>Brand</span>
+                  </div>
+                  <a href="https://inclounge.top" target="_blank" rel="noreferrer" className="project-action-link purple">
+                    Viziteaza <ExternalLink size={16} />
                   </a>
                 </motion.div>
               </Tilt>
 
-              {/* Incoming Project: Todo App */}
+              {/* Project: Todo Maker */}
               <Tilt className="tilt-wrapper" tiltMaxAngleX={4} tiltMaxAngleY={4} glareEnable={true} glareMaxOpacity={0.1} scale={1.02} transitionSpeed={1500}>
-                <motion.div className="story-card project-card incoming-project" variants={itemVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-                  <span className="project-tag text-warning" style={{background: 'rgba(254, 231, 92, 0.2)'}}>IN DEVELOPMENT</span>
-                  <div className="incoming-content">
-                    <LayoutList size={48} className="text-warning pulse-icon" style={{marginBottom: '1rem'}} />
-                    <h4 className="text-warning">To-Do List Maker</h4>
-                    <p>Aplicație de productivitate extrem de rapidă. Task management regândit pentru eficiență maximă.</p>
-                    
-                    <Link to="/tools/todo-maker" className="btn btn-secondary" style={{marginTop: '1rem', marginBottom: '1.5rem', borderColor: '#fee75c', color: '#fee75c'}}>
-                      Testează Beta <ArrowRight size={16}/>
-                    </Link>
-
-                    <div className="loading-bar">
-                      <div className="loading-progress"></div>
+                <motion.div className="story-card project-card compact-project-card incoming-project" variants={itemVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+                  <Link to="/tools/todo-maker" className="todo-project-card-link" aria-label="Deschide To-Do List Maker">
+                    <div className="project-card-top">
+                      <span className="project-tag warning">LIVE TOOL</span>
+                      <span className="project-status-pill">New</span>
                     </div>
-                  </div>
+                    <div className="project-header">
+                      <div className="project-icon-box warning">
+                        <LayoutList size={24} />
+                      </div>
+                      <div>
+                        <h4>To-Do List Maker</h4>
+                        <span>Jira-style board</span>
+                      </div>
+                    </div>
+                    <p>Task management avansat cu sprinturi, epicuri, prioritati si roadmap.</p>
+                    <div className="project-feature-row">
+                      <span>Kanban</span>
+                      <span>Backlog</span>
+                      <span>Roadmap</span>
+                    </div>
+                    <span className="project-action-link warning">
+                      Deschide <ArrowRight size={16} />
+                    </span>
+                  </Link>
                 </motion.div>
               </Tilt>
             </div>
           </div>
         </section>
 
-        {/* 3. COMUNITATE (WILDFIRE) */}
-        <motion.section 
-          className="story-section"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-          variants={sectionVariants}
-        >
-          <div className="section-container">
-            <motion.h2 className="section-heading" variants={itemVariants}>
-              <ShieldCheck size={36} className="heading-icon-svg text-danger" /> Ecosistem & Comunitate
-            </motion.h2>
-            
-            <motion.div className="story-card cs2-banner" variants={itemVariants}>
-              <div className="cs2-bg-image"></div>
-              <div className="cs2-content">
-                <div className="cs2-header-wrapper">
-                  <div className="cs2-header">
-                    <ShieldCheck size={56} color="#E84A5F" className="wildfire-logo" />
-                    <div>
-                      <h3>CS2.WILDFIRE.RO</h3>
-                      <p className="cs2-role">Community Manager Oficial</p>
-                    </div>
-                  </div>
-                  <a href="https://discord.gg/wildfire" target="_blank" rel="noreferrer" className="btn btn-discord btn-large">
-                    <img src="https://assets-global.website-files.com/6257adef93867e50d84d30e2/636e0a6ca814282eca7172c6_icon_clyde_white_RGB.svg" alt="Discord" width="22" height="22" />
-                    Intră pe Server
-                  </a>
-                </div>
-                <div className="cs2-stats">
-                  <div className="stat-pill"><Map size={18} /> Mirage Only</div>
-                  <div className="stat-pill"><Activity size={18} /> 128 Tickrate</div>
-                  <div className="stat-pill"><Server size={18} /> Performanță Maximă</div>
-                </div>
-              </div>
-            </motion.div>
-            
-            <SteamWidget />
-          </div>
-        </motion.section>
 
-        {/* 4. SPECS & SETUP (NEXT-LEVEL DATA TABLE) */}
+
+        {/* 4. SPECS & SETUP (HARDWARE BENTO) */}
         <section className="story-section" ref={gearRef}>
-          <div className="section-container" style={{maxWidth: '1200px'}}>
+          <div className="section-container" style={{ maxWidth: '1200px' }}>
             <motion.h2 className="section-heading" variants={itemVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
               <Server size={36} className="heading-icon-svg text-primary" /> Arsenal & System Specs
             </motion.h2>
-            
-            <motion.div className="tech-specs-bento" variants={itemVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-              
-              {/* Core System Table */}
-              <div className="spec-panel">
-                <div className="spec-panel-header">
-                  <Cpu size={24} className="text-primary" />
-                  <h3>Workstation Core</h3>
-                </div>
-                <div className="spec-table">
-                  <div className="spec-row">
-                    <span className="spec-label">Processor</span>
-                    <span className="spec-value text-warning">AMD Ryzen 5 7600X <span className="spec-sub">(6-Core, 5.03GHz)</span></span>
-                  </div>
-                  <div className="spec-row">
-                    <span className="spec-label">Graphics</span>
-                    <span className="spec-value text-primary">Radeon RX 6750 XT <span className="spec-sub">(12GB GDDR6)</span></span>
-                  </div>
-                  <div className="spec-row">
-                    <span className="spec-label">Memory</span>
-                    <span className="spec-value">32 GB DDR5 <span className="spec-sub">(@ 4800 MHz)</span></span>
-                  </div>
-                  <div className="spec-row">
-                    <span className="spec-label">Motherboard</span>
-                    <span className="spec-value">MSI PRO B650-S <span className="spec-sub">(WIFI AM5)</span></span>
-                  </div>
+
+            <motion.div className="hardware-bento" variants={itemVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+
+              {/* GPU: Biggest Card */}
+              <div className="hw-card gpu-card">
+                <div className="hw-glow-red"></div>
+                <div className="hw-icon-bg"><MonitorPlay size={120} /></div>
+                <div className="hw-content">
+                  <span className="hw-label">Graphics Processing</span>
+                  <h3>Radeon RX 6750 XT</h3>
+                  <p>12GB GDDR6 VRAM • AMD RDNA 2</p>
                 </div>
               </div>
 
-              {/* Peripherals Table */}
-              <div className="spec-panel">
-                <div className="spec-panel-header">
-                  <Gamepad2 size={24} className="text-primary" />
-                  <h3>Gaming Peripherals</h3>
+              {/* CPU: Wide Card */}
+              <div className="hw-card cpu-card">
+                <div className="hw-glow-orange"></div>
+                <div className="hw-icon-bg"><Cpu size={80} /></div>
+                <div className="hw-content">
+                  <span className="hw-label">Central Processing</span>
+                  <h3>AMD Ryzen 5 7600X</h3>
+                  <p>6-Core, 12-Thread • 5.03GHz</p>
                 </div>
-                <div className="spec-table">
-                  <div className="spec-row">
-                    <span className="spec-label">Mouse</span>
-                    <span className="spec-value text-primary">Razer Basilisk V3 <span className="spec-sub">(Hyperscroll)</span></span>
-                  </div>
-                  <div className="spec-row">
-                    <span className="spec-label">Keyboard</span>
-                    <span className="spec-value text-warning">Custom Qwerty <span className="spec-sub">(Mechanical)</span></span>
-                  </div>
-                  <div className="spec-row">
-                    <span className="spec-label">Headset</span>
-                    <span className="spec-value text-danger">Logitech PRO X <span className="spec-sub">(Blue Vo!ce)</span></span>
-                  </div>
-                  <div className="spec-row">
-                    <span className="spec-label">Displays</span>
-                    <span className="spec-value">LG FHD + QG240Y S3 <span className="spec-sub">(Dual Setup)</span></span>
-                  </div>
+              </div>
+
+              {/* RAM */}
+              <div className="hw-card ram-card">
+                <div className="hw-icon"><MemoryStick size={28} /></div>
+                <div className="hw-content">
+                  <span className="hw-label">Memory</span>
+                  <h4>32GB DDR5</h4>
+                  <p>4800 MHz</p>
+                </div>
+              </div>
+
+              {/* Motherboard */}
+              <div className="hw-card mobo-card">
+                <div className="hw-icon"><CircuitBoard size={28} /></div>
+                <div className="hw-content">
+                  <span className="hw-label">Motherboard</span>
+                  <h4>MSI PRO B650-S</h4>
+                  <p>WIFI AM5</p>
+                </div>
+              </div>
+
+              {/* Peripherals Row */}
+              <div className="hw-card peripheral-card">
+                <Mouse size={28} className="text-primary" />
+                <div className="periph-details">
+                  <span className="periph-label">Mouse</span>
+                  <h4>Razer Basilisk V3</h4>
+                </div>
+              </div>
+
+              <div className="hw-card peripheral-card">
+                <Keyboard size={28} className="text-warning" />
+                <div className="periph-details">
+                  <span className="periph-label">Keyboard</span>
+                  <h4>Custom Qwerty</h4>
+                </div>
+              </div>
+
+              <div className="hw-card peripheral-card">
+                <Headphones size={28} className="text-danger" />
+                <div className="periph-details">
+                  <span className="periph-label">Audio</span>
+                  <h4>Logitech PRO X</h4>
+                </div>
+              </div>
+
+              <div className="hw-card peripheral-card">
+                <Monitor size={28} className="text-success" />
+                <div className="periph-details">
+                  <span className="periph-label">Displays</span>
+                  <h4>LG FHD + QG240Y S3</h4>
                 </div>
               </div>
 
@@ -294,8 +342,8 @@ function Home() {
           </div>
         </section>
 
-        {/* 5. GAMING LIBRARY (DYNAMIC) */}
-        <motion.section 
+        {/* 5. GAMING LIBRARY (INTERACTIVE ACCORDION) */}
+        <motion.section
           className="story-section"
           initial="hidden"
           whileInView="visible"
@@ -306,24 +354,45 @@ function Home() {
             <motion.h2 className="section-heading" variants={itemVariants}>
               <Gamepad2 size={36} className="heading-icon-svg text-danger" /> Gaming Library
             </motion.h2>
-            
-            <p className="section-description">Aici poți adăuga manual orice joc în cod, iar aplicația preia automat imaginea copertei de pe internet.</p>
 
-            <motion.div className="game-covers-grid" variants={itemVariants}>
-              {playedGames.map((game, index) => (
-                <div className="game-cover-card" key={index}>
-                  <img src={getGameCover(game)} alt={game} className="game-cover-img" />
-                  <div className="game-cover-overlay">
-                    <span className="game-name">{game}</span>
+            <p className="section-description">O colecție interactivă cu jocurile principale. Fă hover pe un card pentru a explora experiența vizuală.</p>
+
+            <motion.div className="games-accordion-container" variants={itemVariants}>
+              {myGames.map((game, index) => (
+                <Tilt
+                  key={game.id || index}
+                  className="game-accordion-item"
+                  tiltMaxAngleX={5}
+                  tiltMaxAngleY={5}
+                  glareEnable={false}
+                  glareMaxOpacity={0}
+                  transitionSpeed={2000}
+                  scale={1}
+                >
+                  <div className="game-accordion-inner">
+                    <img src={game.imageUrl} alt={game.name} className="game-accordion-img" />
+                    <div className="game-accordion-content">
+                      <div className="game-accordion-header">
+                        <span className="game-status-dot"></span>
+                        <span className="game-name-vertical">{game.name}</span>
+                      </div>
+                      <div className="game-accordion-details">
+                        <h3>{game.name}</h3>
+                        <p style={{ color: '#D2FF00', fontSize: '14px', margin: '5px 0 10px 0', fontWeight: 'bold' }}>{game.playtimeHours} ore jucate</p>
+                        <button className="btn-play-game">
+                          <Gamepad2 size={16} /> Explore
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                </Tilt>
               ))}
             </motion.div>
           </div>
         </motion.section>
 
-        {/* 6. SOCIALS & VIBE CHECK */}
-        <motion.section 
+        {/* 6. SOCIALS & VIBE CHECK (MUSIC HUB & ASYMMETRIC SOCIALS) */}
+        <motion.section
           id="socials"
           className="story-section pb-8"
           initial="hidden"
@@ -336,60 +405,78 @@ function Home() {
               <Layers size={36} className="heading-icon-svg text-primary" /> Vibe & Conectare
             </motion.h2>
 
-            <div className="vibe-split">
-              {/* Spotify Box */}
-              <motion.div className="story-card spotify-box" variants={itemVariants}>
-                <iframe 
-                  style={{ borderRadius: '16px', border: 'none' }} 
-                  src="https://open.spotify.com/embed/playlist/6gkgc2xiT9xmD14DJGrllv?utm_source=generator&theme=0" 
-                  width="100%" 
-                  height="352" 
-                  allowFullScreen="" 
-                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
-                  loading="lazy">
-                </iframe>
+            <div className="vibe-bento">
+              {/* Music Hub */}
+              <motion.div className="vibe-card music-hub" variants={itemVariants}>
+                <div className="music-hub-header">
+                  <div className="music-status">
+                    <div className="equalizer">
+                      <span></span><span></span><span></span><span></span>
+                    </div>
+                    <h4>Now Playing Vibe</h4>
+                  </div>
+                  <span className="spotify-badge">Spotify</span>
+                </div>
+                <div className="music-iframe-wrapper">
+                  <iframe
+                    style={{ borderRadius: '16px', border: 'none' }}
+                    src="https://open.spotify.com/embed/playlist/6gkgc2xiT9xmD14DJGrllv?utm_source=generator&theme=0"
+                    width="100%"
+                    height="352"
+                    allowFullScreen=""
+                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                    loading="lazy">
+                  </iframe>
+                </div>
               </motion.div>
 
-              {/* Social Media Links Block */}
-              <motion.div className="social-block" variants={itemVariants}>
-                <div className="social-block-header">
-                  <h3>Găsește-mă online</h3>
-                  <p>Lasă-mi un mesaj, hai pe server sau urmărește codul pe GitHub.</p>
-                </div>
-                
-                <div className="big-social-links">
-                  <a href="https://github.com/iannC69" target="_blank" rel="noreferrer" className="big-social-btn git">
-                    <GitBranch size={28} />
-                    <div className="social-text">
+              {/* Asymmetric Socials */}
+              <motion.div className="vibe-socials-grid" variants={itemVariants}>
+
+                <a href="https://github.com/iannC69" target="_blank" rel="noreferrer" className="social-bento-card github-card">
+                  <GitBranch size={120} className="social-bg-icon" />
+                  <div className="social-bento-content">
+                    <GitBranch size={28} className="social-icon-top" />
+                    <div className="social-text-bottom">
                       <span className="platform">GitHub</span>
                       <span className="handle">@iannC69</span>
                     </div>
-                  </a>
+                  </div>
+                </a>
 
-                  <a href="https://steamcommunity.com/id/1iannc/" target="_blank" rel="noreferrer" className="big-social-btn steam">
-                    <Gamepad2 size={28} />
-                    <div className="social-text">
+                <a href="https://steamcommunity.com/id/1iannc/" target="_blank" rel="noreferrer" className="social-bento-card steam-card">
+                  <Gamepad2 size={120} className="social-bg-icon" />
+                  <div className="social-bento-content">
+                    <Gamepad2 size={28} className="social-icon-top" />
+                    <div className="social-text-bottom">
                       <span className="platform">Steam</span>
                       <span className="handle">1iannc</span>
                     </div>
-                  </a>
+                  </div>
+                </a>
 
-                  <a href="https://instagram.com/iannc_oficial" target="_blank" rel="noreferrer" className="big-social-btn insta">
-                    <Camera size={28} />
-                    <div className="social-text">
+                <a href="https://instagram.com/iannc_oficial" target="_blank" rel="noreferrer" className="social-bento-card insta-card">
+                  <Camera size={120} className="social-bg-icon" />
+                  <div className="social-bento-content">
+                    <Camera size={28} className="social-icon-top" />
+                    <div className="social-text-bottom">
                       <span className="platform">Instagram</span>
                       <span className="handle">@iannc_oficial</span>
                     </div>
-                  </a>
-                  
-                  <a href="https://youtube.com/@iannc" target="_blank" rel="noreferrer" className="big-social-btn youtube">
-                    <Video size={28} />
-                    <div className="social-text">
+                  </div>
+                </a>
+
+                <a href="https://youtube.com/@iannc" target="_blank" rel="noreferrer" className="social-bento-card youtube-card">
+                  <Video size={120} className="social-bg-icon" />
+                  <div className="social-bento-content">
+                    <Video size={28} className="social-icon-top" />
+                    <div className="social-text-bottom">
                       <span className="platform">YouTube</span>
                       <span className="handle">@iannc</span>
                     </div>
-                  </a>
-                </div>
+                  </div>
+                </a>
+
               </motion.div>
             </div>
           </div>
@@ -412,11 +499,11 @@ function Home() {
             <div className="footer-links-group">
               <div className="footer-column">
                 <h4>Navigație</h4>
-                <a href="#" className="footer-link" onClick={(e) => { e.preventDefault(); window.scrollTo({top: 0, behavior: 'smooth'}); }}>Acasă</a>
+                <a href="#" className="footer-link" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Acasă</a>
                 <a href="#proiecte" className="footer-link">Proiecte</a>
                 <a href="#socials" className="footer-link">Contact</a>
               </div>
-              
+
               <div className="footer-column">
                 <h4>Ecosistem</h4>
                 <Link to="/tools/update-maker" className="footer-link">Update Maker</Link>
@@ -429,9 +516,9 @@ function Home() {
           <div className="footer-bottom">
             <p>&copy; {new Date().getFullYear()} IANNC.RO. Toate drepturile rezervate.</p>
             <div className="footer-social-mini">
-              <a href="https://github.com/iannC69" target="_blank" rel="noreferrer" title="GitHub"><GitBranch size={20}/></a>
-              <a href="https://steamcommunity.com/id/1iannc/" target="_blank" rel="noreferrer" title="Steam"><Gamepad2 size={20}/></a>
-              <a href="https://instagram.com/iannc_oficial" target="_blank" rel="noreferrer" title="Instagram"><Camera size={20}/></a>
+              <a href="https://github.com/iannC69" target="_blank" rel="noreferrer" title="GitHub"><GitBranch size={20} /></a>
+              <a href="https://steamcommunity.com/id/1iannc/" target="_blank" rel="noreferrer" title="Steam"><Gamepad2 size={20} /></a>
+              <a href="https://instagram.com/iannc_oficial" target="_blank" rel="noreferrer" title="Instagram"><Camera size={20} /></a>
             </div>
           </div>
         </footer>

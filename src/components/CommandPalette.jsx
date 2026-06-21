@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Command } from 'cmdk';
 import { useNavigate } from 'react-router-dom';
-import { Monitor, Home, Palette, Settings, X } from 'lucide-react';
+import { ClipboardList, Monitor, Home, Palette, Settings, X } from 'lucide-react';
 import { playClickSound } from '../utils/sounds';
 import './CommandPalette.css';
 
@@ -51,6 +51,9 @@ export default function CommandPalette() {
             </Command.Item>
             <Command.Item onSelect={() => handleSelect(() => navigate('/admin'))}>
               <Settings size={16} /> Admin Command Center
+            </Command.Item>
+            <Command.Item onSelect={() => handleSelect(() => navigate('/tools/todo-maker'))}>
+              <ClipboardList size={16} /> To-Do List Maker
             </Command.Item>
             <Command.Item onSelect={() => handleSelect(() => { navigate('/'); setTimeout(() => window.location.href = '#proiecte', 100); })}>
               <Monitor size={16} /> Projects

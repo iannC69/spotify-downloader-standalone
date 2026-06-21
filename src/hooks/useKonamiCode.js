@@ -5,7 +5,7 @@ const SECRET_CODE = ['i', 'a', 'n', 'n', 'c'];
 
 export default function useKonamiCode() {
   const [success, setSuccess] = useState(false);
-  const [inputSequence, setInputSequence] = useState([]);
+  const [, setInputSequence] = useState([]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {

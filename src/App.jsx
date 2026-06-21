@@ -2,7 +2,9 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { useEffect } from 'react';
 import Home from './pages/Home';
 import UpdateMaker from './pages/UpdateMaker';
+import TodoMaker from './pages/TodoMaker';
 import Admin from './pages/Admin';
+import AdminGames from './pages/AdminGames';
 import CommandPalette from './components/CommandPalette';
 import useKonamiCode from './hooks/useKonamiCode';
 import MatrixRain from './components/MatrixRain';
@@ -29,7 +31,9 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/tools/update-maker" element={<UpdateMaker />} />
+            <Route path="/tools/todo-maker" element={<TodoMaker />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/games" element={<AdminGames />} />
           </Routes>
         </main>
       </div>
