@@ -16,12 +16,16 @@
     "framer-motion": "^12.40.0",
     "highlight.js": "^11.11.1",
     "html2canvas": "^1.4.1",
+    "jsmediatags": "^3.9.7",
     "lucide-react": "^1.21.0",
+    "music-metadata": "^11.13.0",
+    "music-metadata-browser": "^2.5.11",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-parallax-tilt": "^1.7.332",
     "react-router-dom": "^7.18.0",
-    "use-sound": "^5.0.0"
+    "use-sound": "^5.0.0",
+    "wavesurfer.js": "^7.12.8"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -5,11 +5,12 @@ import {
   Gamepad2, GitBranch, Camera, Video,
   ArrowRight, BadgeCheck, Server,
   Cpu, ChevronDown, Layers, Mail, Code, Bot, Globe, ExternalLink, LayoutList,
-  MonitorPlay, MemoryStick, CircuitBoard, Mouse, Keyboard, Headphones, Monitor
+  MonitorPlay, MemoryStick, CircuitBoard, Mouse, Keyboard, Headphones, Monitor, Scissors
 } from 'lucide-react';
 import Tilt from 'react-parallax-tilt';
 import Navbar from '../components/Navbar';
 import LiveStatus from '../components/LiveStatus';
+import SpotifyProfile from '../components/SpotifyProfile';
 import myGames from '../data/myGames.json';
 import './Home.css';
 
@@ -93,7 +94,7 @@ function Home() {
 
                 <div className="glass-bento-inner">
                   <div className="glass-bento-glow"></div>
-                  
+
                   <div className="bento-avatar-container">
                     <img
                       src="https://github.com/iannC69.png"
@@ -152,7 +153,7 @@ function Home() {
                   <span>Live</span>
                 </div>
                 <div>
-                  <strong>02</strong>
+                  <strong>04</strong>
                   <span>Tools</span>
                 </div>
                 <div>
@@ -243,6 +244,93 @@ function Home() {
                       <span>Roadmap</span>
                     </div>
                     <span className="project-action-link warning">
+                      Deschide <ArrowRight size={16} />
+                    </span>
+                  </Link>
+                </motion.div>
+              </Tilt>
+              {/* Project: Youtube Downloader */}
+              <Tilt className="tilt-wrapper" tiltMaxAngleX={4} tiltMaxAngleY={4} glareEnable={true} glareMaxOpacity={0.1} scale={1.02} transitionSpeed={1500}>
+                <motion.div className="story-card project-card compact-project-card incoming-project" variants={itemVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+                  <Link to="/downloader" className="todo-project-card-link" aria-label="Deschide YouTube Downloader">
+                    <div className="project-card-top">
+                      <span className="project-tag danger">NEXT LEVEL TOOL</span>
+                      <span className="project-status-pill">Live</span>
+                    </div>
+                    <div className="project-header">
+                      <div className="project-icon-box danger">
+                        <Video size={24} />
+                      </div>
+                      <div>
+                        <h4>YouTube Downloader</h4>
+                        <span>yt-dlp & ffmpeg engine</span>
+                      </div>
+                    </div>
+                    <p>Extractor ultra rapid de video (4K MP4) și audio (320kbps MP3) din link-uri YouTube.</p>
+                    <div className="project-feature-row">
+                      <span>4K MP4</span>
+                      <span>320kbps MP3</span>
+                      <span>SSE Progress</span>
+                    </div>
+                    <span className="project-action-link danger">
+                      Deschide <ArrowRight size={16} />
+                    </span>
+                  </Link>
+                </motion.div>
+              </Tilt>
+              {/* Project: Mp3 Cutter */}
+              <Tilt className="tilt-wrapper" tiltMaxAngleX={4} tiltMaxAngleY={4} glareEnable={true} glareMaxOpacity={0.1} scale={1.02} transitionSpeed={1500}>
+                <motion.div className="story-card project-card compact-project-card incoming-project" variants={itemVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+                  <Link to="/cutter" className="todo-project-card-link" aria-label="Deschide MP3 Editor Cutter">
+                    <div className="project-card-top">
+                      <span className="project-tag cyan">AUDIO TOOL</span>
+                      <span className="project-status-pill">New</span>
+                    </div>
+                    <div className="project-header">
+                      <div className="project-icon-box cyan">
+                        <Scissors size={24} />
+                      </div>
+                      <div>
+                        <h4>MP3 Editor Cutter</h4>
+                        <span>Decupează perfect</span>
+                      </div>
+                    </div>
+                    <p>Taie și descarcă porțiunea exactă (HH:MM:SS) dorită dintr-o melodie de pe YouTube.</p>
+                    <div className="project-feature-row">
+                      <span>YouTube to MP3</span>
+                      <span>Cut Interval</span>
+                      <span>Fast</span>
+                    </div>
+                    <span className="project-action-link cyan">
+                      Deschide <ArrowRight size={16} />
+                    </span>
+                  </Link>
+                </motion.div>
+              </Tilt>
+              {/* Project: Spotify Downloader */}
+              <Tilt className="tilt-wrapper" tiltMaxAngleX={4} tiltMaxAngleY={4} glareEnable={true} glareMaxOpacity={0.1} scale={1.02} transitionSpeed={1500}>
+                <motion.div className="story-card project-card compact-project-card incoming-project" variants={itemVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+                  <Link to="/spotify" className="todo-project-card-link" aria-label="Deschide Spotify Downloader">
+                    <div className="project-card-top">
+                      <span className="project-tag spotify">MUSIC TOOL</span>
+                      <span className="project-status-pill">New</span>
+                    </div>
+                    <div className="project-header">
+                      <div className="project-icon-box spotify">
+                        <Headphones size={24} />
+                      </div>
+                      <div>
+                        <h4>Spotify Downloader</h4>
+                        <span>Original metadata</span>
+                      </div>
+                    </div>
+                    <p>Descarcă piese individuale de pe Spotify direct în MP3 cu toate tag-urile ID3 incluse.</p>
+                    <div className="project-feature-row">
+                      <span>Cover Art</span>
+                      <span>320kbps</span>
+                      <span>yt-dlp</span>
+                    </div>
+                    <span className="project-action-link spotify">
                       Deschide <ArrowRight size={16} />
                     </span>
                   </Link>
@@ -405,34 +493,21 @@ function Home() {
               <Layers size={36} className="heading-icon-svg text-primary" /> Vibe & Conectare
             </motion.h2>
 
-            <div className="vibe-bento">
-              {/* Music Hub */}
-              <motion.div className="vibe-card music-hub" variants={itemVariants}>
-                <div className="music-hub-header">
-                  <div className="music-status">
-                    <div className="equalizer">
-                      <span></span><span></span><span></span><span></span>
-                    </div>
-                    <h4>Now Playing Vibe</h4>
-                  </div>
-                  <span className="spotify-badge">Spotify</span>
-                </div>
-                <div className="music-iframe-wrapper">
-                  <iframe
-                    style={{ borderRadius: '16px', border: 'none' }}
-                    src="https://open.spotify.com/embed/playlist/6gkgc2xiT9xmD14DJGrllv?utm_source=generator&theme=0"
-                    width="100%"
-                    height="352"
-                    allowFullScreen=""
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                    loading="lazy">
-                  </iframe>
-                </div>
+            <div className="vibe-and-socials-container">
+              {/* Nivelul 1: Spotify Web Profile */}
+              <motion.div variants={itemVariants}>
+                <SpotifyProfile />
               </motion.div>
 
-              {/* Asymmetric Socials */}
-              <motion.div className="vibe-socials-grid" variants={itemVariants}>
+              {/* Linie despartitoare fina */}
+              <div className="section-divider"></div>
 
+              {/* Nivelul 2: Social Media Zone */}
+              <div className="socials-zone-title">
+                <h3>Conectează-te cu mine</h3>
+                <p>Urmărește activitatea mea pe rețelele sociale și platformele de gaming.</p>
+              </div>
+              <motion.div className="socials-horizontal-grid" variants={itemVariants}>
                 <a href="https://github.com/iannC69" target="_blank" rel="noreferrer" className="social-bento-card github-card">
                   <GitBranch size={120} className="social-bg-icon" />
                   <div className="social-bento-content">
@@ -476,7 +551,6 @@ function Home() {
                     </div>
                   </div>
                 </a>
-
               </motion.div>
             </div>
           </div>
@@ -508,6 +582,9 @@ function Home() {
                 <h4>Ecosistem</h4>
                 <Link to="/tools/update-maker" className="footer-link">Update Maker</Link>
                 <Link to="/tools/todo-maker" className="footer-link">To-Do Maker</Link>
+                <Link to="/downloader" className="footer-link text-danger">YouTube Downloader</Link>
+                <Link to="/cutter" className="footer-link" style={{color: '#a855f7'}}>MP3 Cutter</Link>
+                <Link to="/spotify" className="footer-link" style={{color: '#1DB954'}}>Spotify Downloader</Link>
                 <a href="https://inclounge.top" target="_blank" rel="noreferrer" className="footer-link">IncLounge</a>
               </div>
             </div>

@@ -149,6 +149,7 @@
 .hero-title-left .text-gradient {
   background: linear-gradient(to right, var(--primary), #a855f7);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -209,8 +210,10 @@
 .btn-primary::before {
   content: '';
   position: absolute;
-  top: 0; left: -100%;
-  width: 100%; height: 100%;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
   transition: all 0.5s ease;
 }
@@ -222,6 +225,25 @@
 
 .btn-primary:hover::before {
   left: 100%;
+}
+
+.project-icon-box.warning {
+  background: rgba(234, 179, 8, 0.1);
+  color: #eab308;
+}
+
+.project-icon-box.danger {
+  background: rgba(255, 0, 85, 0.1);
+  color: #ff0055;
+}
+
+.project-tag.danger {
+  background: rgba(255, 0, 85, 0.2);
+  color: #ff0055;
+}
+
+.project-action-link.danger {
+  color: #ff0055;
 }
 
 .btn-secondary {
@@ -313,7 +335,9 @@
 }
 
 @keyframes spinRing {
-  100% { transform: rotate(360deg); }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .bento-stats-container {
@@ -640,6 +664,24 @@
   box-shadow: 0 10px 25px rgba(254, 231, 92, 0.18);
 }
 
+.project-icon-box.danger {
+  color: #fff;
+  background: #f43f5e;
+  box-shadow: 0 10px 25px rgba(244, 63, 94, 0.2);
+}
+
+.project-icon-box.spotify {
+  color: #000;
+  background: #1DB954;
+  box-shadow: 0 10px 25px rgba(29, 185, 84, 0.2);
+}
+
+.project-icon-box.cyan {
+  color: #fff;
+  background: #06b6d4;
+  box-shadow: 0 10px 25px rgba(6, 182, 212, 0.2);
+}
+
 .project-card p {
   color: #94a3b8;
   font-size: 0.9rem;
@@ -670,6 +712,21 @@
 .project-tag.warning {
   color: #fee75c;
   background: rgba(254, 231, 92, 0.16);
+}
+
+.project-tag.danger {
+  color: #fda4af;
+  background: rgba(244, 63, 94, 0.18);
+}
+
+.project-tag.spotify {
+  color: #1DB954;
+  background: rgba(29, 185, 84, 0.18);
+}
+
+.project-tag.cyan {
+  color: #67e8f9;
+  background: rgba(6, 182, 212, 0.18);
 }
 
 .project-status-pill {
@@ -729,6 +786,21 @@
 .project-action-link.warning {
   color: #0b0d10;
   background: #fee75c;
+}
+
+.project-action-link.danger {
+  color: #fff;
+  background: #f43f5e;
+}
+
+.project-action-link.spotify {
+  color: #000;
+  background: #1DB954;
+}
+
+.project-action-link.cyan {
+  color: #fff;
+  background: #06b6d4;
 }
 
 .mock-window {
@@ -914,7 +986,8 @@
   grid-row: span 1;
 }
 
-.ram-card, .mobo-card {
+.ram-card,
+.mobo-card {
   grid-column: span 1;
   grid-row: span 1;
 }
@@ -982,8 +1055,21 @@
   display: block;
 }
 
-.gpu-card h3 { font-size: 2.8rem; font-weight: 900; color: #fff; margin-bottom: 0.5rem; letter-spacing: -1px; }
-.cpu-card h3 { font-size: 2.2rem; font-weight: 900; color: #fff; margin-bottom: 0.5rem; letter-spacing: -0.5px; }
+.gpu-card h3 {
+  font-size: 2.8rem;
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 0.5rem;
+  letter-spacing: -1px;
+}
+
+.cpu-card h3 {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.5px;
+}
 
 .hw-content h4 {
   font-size: 1.5rem;
@@ -1029,7 +1115,9 @@
   .hardware-bento {
     grid-template-columns: 1fr;
   }
-  .gpu-card, .cpu-card {
+
+  .gpu-card,
+  .cpu-card {
     grid-column: 1 / -1;
   }
 }
@@ -1155,7 +1243,7 @@
   font-weight: 900;
   color: #fff;
   margin-bottom: 1rem;
-  text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  text-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
   white-space: nowrap;
 }
 
@@ -1187,9 +1275,11 @@
     flex-direction: column;
     height: 600px;
   }
+
   .game-name-vertical {
     writing-mode: horizontal-tb;
   }
+
   .game-accordion-header {
     flex-direction: row;
     top: auto;
@@ -1197,106 +1287,48 @@
     left: 2rem;
     transform: none;
   }
+
   .game-accordion-item:hover .game-accordion-header {
     opacity: 0;
   }
 }
 
 /* 6. SOCIALS & VIBE CHECK (MUSIC HUB & ASYMMETRIC SOCIALS) */
-.vibe-bento {
-  display: grid;
-  grid-template-columns: 1fr 1.5fr;
-  gap: 2rem;
-  align-items: stretch;
-}
-
-/* MUSIC HUB */
-.music-hub {
-  background: rgba(15, 15, 20, 0.6);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 24px;
-  padding: 2rem;
+.vibe-and-socials-container {
   display: flex;
   flex-direction: column;
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
-  transition: transform 0.4s ease, border-color 0.4s ease;
+  gap: 3rem;
+  width: 100%;
 }
 
-.music-hub:hover {
-  transform: translateY(-5px);
-  border-color: rgba(29, 185, 84, 0.4);
-  box-shadow: 0 25px 50px rgba(29, 185, 84, 0.15);
+.section-divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  margin: 1rem 0;
 }
 
-.music-hub-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.socials-zone-title {
+  text-align: center;
   margin-bottom: 2rem;
 }
 
-.music-status {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.music-status h4 {
-  font-size: 1.2rem;
+.socials-zone-title h3 {
+  font-size: 2rem;
   font-weight: 800;
   color: #fff;
-  margin: 0;
+  margin-bottom: 0.5rem;
 }
 
-.equalizer {
-  display: flex;
-  align-items: flex-end;
-  gap: 3px;
-  height: 20px;
-}
-
-.equalizer span {
-  width: 4px;
-  background: #1db954;
-  border-radius: 2px;
-  animation: eqBounce 1s infinite alternate ease-in-out;
-}
-
-.equalizer span:nth-child(1) { height: 60%; animation-delay: 0.1s; }
-.equalizer span:nth-child(2) { height: 100%; animation-delay: 0.3s; }
-.equalizer span:nth-child(3) { height: 40%; animation-delay: 0.0s; }
-.equalizer span:nth-child(4) { height: 80%; animation-delay: 0.2s; }
-
-@keyframes eqBounce {
-  0% { height: 20%; }
-  100% { height: 100%; }
-}
-
-.spotify-badge {
-  background: rgba(29, 185, 84, 0.15);
-  color: #1db954;
-  padding: 0.4rem 1rem;
-  border-radius: 100px;
-  font-size: 0.8rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.music-iframe-wrapper {
-  flex-grow: 1;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+.socials-zone-title p {
+  color: #94a3b8;
+  font-size: 1rem;
 }
 
 /* ASYMMETRIC SOCIALS */
-.vibe-socials-grid {
+.socials-horizontal-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  grid-template-rows: repeat(2, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 1.5rem;
 }
 
@@ -1374,19 +1406,34 @@
 }
 
 /* Brand specific styling */
-.github-card:hover { background: linear-gradient(135deg, rgba(36, 41, 46, 0.9) 0%, rgba(20, 20, 25, 0.9) 100%); border-color: #4f545c; }
-.steam-card:hover { background: linear-gradient(135deg, rgba(23, 26, 33, 0.9) 0%, rgba(0, 173, 238, 0.4) 100%); border-color: #00adee; }
-.insta-card:hover { background: linear-gradient(135deg, rgba(131, 58, 180, 0.6) 0%, rgba(253, 29, 29, 0.6) 50%, rgba(252, 176, 69, 0.6) 100%); border-color: #fd1d1d; }
-.youtube-card:hover { background: linear-gradient(135deg, rgba(255, 0, 0, 0.6) 0%, rgba(100, 0, 0, 0.8) 100%); border-color: #ff0000; }
+.github-card:hover {
+  background: linear-gradient(135deg, rgba(36, 41, 46, 0.9) 0%, rgba(20, 20, 25, 0.9) 100%);
+  border-color: #4f545c;
+}
+
+.steam-card:hover {
+  background: linear-gradient(135deg, rgba(23, 26, 33, 0.9) 0%, rgba(0, 173, 238, 0.4) 100%);
+  border-color: #00adee;
+}
+
+.insta-card:hover {
+  background: linear-gradient(135deg, rgba(131, 58, 180, 0.6) 0%, rgba(253, 29, 29, 0.6) 50%, rgba(252, 176, 69, 0.6) 100%);
+  border-color: #fd1d1d;
+}
+
+.youtube-card:hover {
+  background: linear-gradient(135deg, rgba(255, 0, 0, 0.6) 0%, rgba(100, 0, 0, 0.8) 100%);
+  border-color: #ff0000;
+}
 
 @media (max-width: 1024px) {
-  .vibe-bento {
-    grid-template-columns: 1fr;
+  .socials-horizontal-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (max-width: 640px) {
-  .vibe-socials-grid {
+  .socials-horizontal-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -1577,4 +1624,13 @@
   .btn-discord {
     width: 100%;
   }
-}.game-playtime { font-size: 0.85rem; color: rgba(255, 255, 255, 0.7); margin-top: -4px; margin-bottom: 12px; font-weight: 500; letter-spacing: 0.5px; }
+}
+
+.game-playtime {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: -4px;
+  margin-bottom: 12px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
