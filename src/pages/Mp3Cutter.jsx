@@ -330,8 +330,9 @@ const Mp3Cutter = () => {
     // Use jsmediatags — built for browser, no Node Buffer polyfills required
     const extractCover = async () => {
       try {
-        const mod = await import('jsmediatags');
-        const lib = mod.default || mod;
+        await import('jsmediatags/dist/jsmediatags.min.js');
+        const lib = window.jsmediatags;
+        if (!lib?.read) throw new Error('jsmediatags browser bundle did not load');
         lib.read(file, {
           onSuccess(tag) {
             const tags = tag.tags;
@@ -858,4 +859,3 @@ const Mp3Cutter = () => {
 };
 
 export default Mp3Cutter;
-

@@ -5,7 +5,7 @@ import {
   Gamepad2, GitBranch, Camera, Video,
   ArrowRight, BadgeCheck, Server,
   Cpu, ChevronDown, Layers, Mail, Code, Bot, Globe, ExternalLink, LayoutList,
-  MonitorPlay, MemoryStick, CircuitBoard, Mouse, Keyboard, Headphones, Monitor, Scissors
+  MonitorPlay, MemoryStick, CircuitBoard, Mouse, Keyboard, Headphones, Monitor, Scissors, Brain
 } from 'lucide-react';
 import Tilt from 'react-parallax-tilt';
 import Navbar from '../components/Navbar';
@@ -66,8 +66,7 @@ function Home() {
                 Salut, sunt <span className="text-gradient">IANNC</span> <BadgeCheck size={42} className="verified-badge" />
               </motion.h1>
               <motion.p className="hero-subtitle-left" variants={itemVariants}>
-                Dezvoltator web full-stack și Community Manager.
-                Aduc proiecte la viață prin cod curat, design premium și o conexiune reală cu audiența.
+                Creator de prezentări și Community Manager. Transform ideile în prezentări de impact, design premium și experiențe vizuale captivante.
               </motion.p>
 
               <motion.div className="hero-action-buttons" variants={itemVariants}>
@@ -336,6 +335,36 @@ function Home() {
                   </Link>
                 </motion.div>
               </Tilt>
+
+              {/* Project: Pomodoro */}
+              <Tilt className="tilt-wrapper" tiltMaxAngleX={4} tiltMaxAngleY={4} glareEnable={true} glareMaxOpacity={0.1} scale={1.02} transitionSpeed={1500}>
+                <motion.div className="story-card project-card compact-project-card incoming-project" variants={itemVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+                  <Link to="/pomodoro" className="todo-project-card-link" aria-label="Deschide Pomodoro Focus">
+                    <div className="project-card-top">
+                      <span className="project-tag" style={{ color: '#d8b4fe', background: 'rgba(168, 85, 247, 0.18)' }}>FOCUS TOOL</span>
+                      <span className="project-status-pill">New</span>
+                    </div>
+                    <div className="project-header">
+                      <div className="project-icon-box" style={{ color: '#fff', background: '#a855f7', boxShadow: '0 10px 25px rgba(168, 85, 247, 0.2)' }}>
+                        <Brain size={24} />
+                      </div>
+                      <div>
+                        <h4>Lofi Pomodoro</h4>
+                        <span>Deep work sessions</span>
+                      </div>
+                    </div>
+                    <p>Timer focus avansat cu 3 moduri și live Lofi Radio integrat direct pentru studiu și muncă.</p>
+                    <div className="project-feature-row">
+                      <span>25/5 Timer</span>
+                      <span>Lofi Radio</span>
+                      <span>Aesthetic</span>
+                    </div>
+                    <span className="project-action-link" style={{ color: '#fff', background: '#a855f7' }}>
+                      Deschide <ArrowRight size={16} />
+                    </span>
+                  </Link>
+                </motion.div>
+              </Tilt>
             </div>
           </div>
         </section>
@@ -343,35 +372,34 @@ function Home() {
 
 
         {/* 4. SPECS & SETUP (HARDWARE BENTO) */}
-        <section className="story-section" ref={gearRef}>
+        <section className="story-section hardware-showcase-section" ref={gearRef}>
           <div className="section-container" style={{ maxWidth: '1200px' }}>
             <motion.h2 className="section-heading" variants={itemVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
               <Server size={36} className="heading-icon-svg text-primary" /> Arsenal & System Specs
             </motion.h2>
 
             <motion.div className="hardware-bento" variants={itemVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-
               {/* GPU: Biggest Card */}
-              <div className="hw-card gpu-card">
-                <div className="hw-glow-red"></div>
+              <Tilt className="hw-card gpu-card" tiltMaxAngleX={3} tiltMaxAngleY={3} glareEnable={false} scale={1.008} transitionSpeed={1800}>
+                <div className="hw-card-surface"></div>
                 <div className="hw-icon-bg"><MonitorPlay size={120} /></div>
                 <div className="hw-content">
                   <span className="hw-label">Graphics Processing</span>
                   <h3>Radeon RX 6750 XT</h3>
                   <p>12GB GDDR6 VRAM • AMD RDNA 2</p>
                 </div>
-              </div>
+              </Tilt>
 
               {/* CPU: Wide Card */}
-              <div className="hw-card cpu-card">
-                <div className="hw-glow-orange"></div>
+              <Tilt className="hw-card cpu-card" tiltMaxAngleX={3} tiltMaxAngleY={3} glareEnable={false} scale={1.006} transitionSpeed={1800}>
+                <div className="hw-card-surface"></div>
                 <div className="hw-icon-bg"><Cpu size={80} /></div>
                 <div className="hw-content">
                   <span className="hw-label">Central Processing</span>
                   <h3>AMD Ryzen 5 7600X</h3>
                   <p>6-Core, 12-Thread • 5.03GHz</p>
                 </div>
-              </div>
+              </Tilt>
 
               {/* RAM */}
               <div className="hw-card ram-card">
@@ -583,8 +611,8 @@ function Home() {
                 <Link to="/tools/update-maker" className="footer-link">Update Maker</Link>
                 <Link to="/tools/todo-maker" className="footer-link">To-Do Maker</Link>
                 <Link to="/downloader" className="footer-link text-danger">YouTube Downloader</Link>
-                <Link to="/cutter" className="footer-link" style={{color: '#a855f7'}}>MP3 Cutter</Link>
-                <Link to="/spotify" className="footer-link" style={{color: '#1DB954'}}>Spotify Downloader</Link>
+                <Link to="/cutter" className="footer-link" style={{ color: '#a855f7' }}>MP3 Cutter</Link>
+                <Link to="/spotify" className="footer-link" style={{ color: '#1DB954' }}>Spotify Downloader</Link>
                 <a href="https://inclounge.top" target="_blank" rel="noreferrer" className="footer-link">IncLounge</a>
               </div>
             </div>

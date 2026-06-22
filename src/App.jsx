@@ -10,8 +10,8 @@ import useKonamiCode from './hooks/useKonamiCode';
 import MatrixRain from './components/MatrixRain';
 import YoutubeDownloader from './pages/YoutubeDownloader';
 import Mp3Cutter from './pages/Mp3Cutter';
-
 import SpotifyDownloader from './pages/SpotifyDownloader';
+import Pomodoro from './pages/Pomodoro';
 
 function App() {
   useEffect(() => {
@@ -41,6 +41,7 @@ function App() {
               <Route path="/downloader" element={<YoutubeDownloader />} />
               <Route path="/cutter" element={<Mp3Cutter />} />
               <Route path="/spotify" element={<SpotifyDownloader />} />
+              <Route path="/pomodoro" element={<Pomodoro />} />
             </Routes>
         </main>
       </div>
