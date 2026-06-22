@@ -1,10 +1,46 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  ChevronDown,
+  ChevronUp,
+  Disc3,
+  ExternalLink,
+  ListMusic,
+  Play,
+  Sparkles,
+  UserCheck,
+  Users,
+} from 'lucide-react';
 import './SpotifyProfile.css';
+
+const fallbackProfileImage = 'https://i.scdn.co/image/ab6761610000e5eb12a2ef08d00dd7451a6dbed6';
+const fallbackHeroImage = 'https://i.scdn.co/image/ab6761610000e5eb4293385d324db8558179afd9';
+
+const getImage = (images, fallback = fallbackHeroImage) => (
+  images?.[0]?.url || images?.[1]?.url || images?.[2]?.url || fallback
+);
+
+function ViewMoreButton({ count, isExpanded, label, onClick, visibleCount }) {
+  if (count <= visibleCount) return null;
+
+  return (
+    <div className="spotify-grid-footer">
+      <button className="spotify-view-more-btn" type="button" onClick={onClick}>
+        <span>{isExpanded ? 'Show less' : `View all ${count} ${label}`}</span>
+        {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+      </button>
+    </div>
+  );
+}
 
 export default function SpotifyProfile() {
   const [spotifyData, setSpotifyData] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState({
+    topArtists: false,
+    playlists: false,
+    followedArtists: false,
+  });
 
   useEffect(() => {
     fetch('/api/spotify/data')
@@ -27,83 +63,249 @@ export default function SpotifyProfile() {
     window.location.href = '/api/spotify/login';
   };
 
+  const profile = spotifyData?.profile;
+  const profileName = profile?.display_name || 'IANNC';
+  const profilePossessive = `${profileName}'s`;
+  const topArtists = spotifyData?.topArtists || [];
+  const playlists = spotifyData?.playlists || [];
+  const followedArtists = spotifyData?.followedArtists || [];
+  const followedWarning = spotifyData?.spotifyWarnings?.followedArtists;
+  const featuredArtist = topArtists[0];
+  const featuredPlaylist = playlists[0];
+  const visibleTopArtists = expanded.topArtists ? topArtists : topArtists.slice(0, 6);
+  const visiblePlaylists = expanded.playlists ? playlists : playlists.slice(0, 4);
+  const visibleFollowedArtists = expanded.followedArtists ? followedArtists : followedArtists.slice(0, 6);
+
+  const heroImage = useMemo(() => (
+    getImage(featuredArtist?.images, getImage(featuredPlaylist?.images, fallbackHeroImage))
+  ), [featuredArtist, featuredPlaylist]);
+
+  const toggleExpanded = section => {
+    setExpanded(current => ({
+      ...current,
+      [section]: !current[section],
+    }));
+  };
+
   if (loading) {
-    return <div className="spotify-container loading">Se încarcă Vibe-ul tău muzical...</div>;
+    return (
+      <div className="spotify-container spotify-state-card">
+        <Disc3 className="spotify-state-icon" size={28} />
+        <span>Se incarca vibe-ul tau muzical...</span>
+      </div>
+    );
   }
 
   if (error || !spotifyData) {
     return (
-      <div className="spotify-container error-state">
+      <div className="spotify-container spotify-state-card">
         <div className="spotify-auth-prompt">
-          <h3>Conectează-te cu Spotify</h3>
-          <p>Pentru a afișa live Top Artiști, Playlist-urile tale și Profilul, trebuie să ne conectăm la API-ul Spotify.</p>
+          <Disc3 size={34} />
+          <h3>Conecteaza Spotify</h3>
+          <p>Afisam profilul, top artistii si playlisturile direct din API-ul Spotify.</p>
           <button className="spotify-login-btn" onClick={handleLogin}>
             Login to Spotify
+            <ExternalLink size={17} />
           </button>
         </div>
       </div>
     );
   }
 
-  const { profile, topArtists, playlists } = spotifyData;
-
   return (
-    <div
+    <section
       className="spotify-container"
-      style={{ backgroundImage: `url(${topArtists?.[0]?.images?.[0]?.url || 'https://i.scdn.co/image/ab6761610000e5eb4293385d324db8558179afd9'})` }}
+      style={{ '--spotify-hero-image': `url(${heroImage})` }}
+      aria-label="Spotify profile"
     >
-      {/* HEADER: User Profile */}
-      <div className="spotify-header">
-        <img
-          src={profile?.images?.[0]?.url || profile?.images?.[1]?.url || 'https://i.scdn.co/image/ab6761610000e5eb12a2ef08d00dd7451a6dbed6'}
-          alt="Profile"
-          className="spotify-avatar"
-        />
-        <div className="spotify-header-info">
-          <span className="spotify-label">Profile</span>
-          <h2 className="spotify-username">{profile?.display_name || 'IANNC'}</h2>
-          <div className="spotify-stats">
-            <span>{profile?.followers?.total || 0} Followers</span>
-            <span className="dot-separator">•</span>
-            <span>{playlists?.length || 0} Public Playlists</span>
+      <div className="spotify-shell-top">
+        <div className="spotify-profile-card">
+          <div className="spotify-avatar-frame">
+            <img
+              src={getImage(profile?.images, fallbackProfileImage)}
+              alt={profileName}
+              className="spotify-avatar"
+            />
+          </div>
+
+          <div className="spotify-header-info">
+            <span className="spotify-label">Spotify Profile</span>
+            <h2 className="spotify-username">{profileName}</h2>
+            <div className="spotify-stats">
+              <span>
+                <Users size={15} />
+                {profile?.followers?.total || 0} followers
+              </span>
+              <span>
+                <ListMusic size={15} />
+                {playlists.length} playlists
+              </span>
+              <span>
+                <Sparkles size={15} />
+                {topArtists.length} top artists
+              </span>
+              <span>
+                <UserCheck size={15} />
+                {followedArtists.length} followed
+              </span>
+            </div>
+
+            {profile?.external_urls?.spotify && (
+              <a
+                href={profile.external_urls.spotify}
+                target="_blank"
+                rel="noreferrer"
+                className="spotify-profile-link"
+              >
+                Go to profile
+                <ExternalLink size={16} />
+              </a>
+            )}
           </div>
         </div>
+
+        {featuredArtist && (
+          <a
+            href={featuredArtist.external_urls.spotify}
+            target="_blank"
+            rel="noreferrer"
+            className="spotify-feature-card"
+          >
+            <img src={getImage(featuredArtist.images)} alt={featuredArtist.name} />
+            <div>
+              <span>Top artist</span>
+              <strong>{featuredArtist.name}</strong>
+              <small>Open on Spotify</small>
+            </div>
+            <Play size={18} fill="currentColor" />
+          </a>
+        )}
       </div>
 
-      {/* TOP ARTISTS GRID */}
-      <div className="spotify-section">
-        <h3 className="spotify-section-title">Top Artists this month</h3>
-        <div className="spotify-artists-grid">
-          {topArtists?.map(artist => (
-            <a href={artist.external_urls.spotify} target="_blank" rel="noreferrer" key={artist.id} className="spotify-artist-card">
-              <img src={artist.images[0]?.url || artist.images[1]?.url} alt={artist.name} />
-              <div className="artist-card-content">
-                <h4>{artist.name}</h4>
-                <span>Artist</span>
+      <div className="spotify-content-grid">
+        <div className="spotify-panel artists-panel">
+          <div className="spotify-section-heading">
+            <div>
+              <span>Listening identity</span>
+              <h3>{profilePossessive} top artists</h3>
+            </div>
+            <Disc3 size={22} />
+          </div>
+
+          <div className="spotify-artists-grid">
+            {visibleTopArtists.map((artist, index) => (
+              <a
+                href={artist.external_urls.spotify}
+                target="_blank"
+                rel="noreferrer"
+                key={artist.id}
+                className="spotify-artist-card"
+              >
+                <img src={getImage(artist.images)} alt={artist.name} />
+                <div className="artist-card-content">
+                  <span>#{index + 1}</span>
+                  <h4>{artist.name}</h4>
+                  <small>Artist</small>
+                </div>
+              </a>
+            ))}
+          </div>
+
+          <ViewMoreButton
+            count={topArtists.length}
+            visibleCount={6}
+            label="top artists"
+            isExpanded={expanded.topArtists}
+            onClick={() => toggleExpanded('topArtists')}
+          />
+        </div>
+
+        <div className="spotify-panel playlists-panel">
+          <div className="spotify-section-heading">
+            <div>
+              <span>{profilePossessive} library</span>
+              <h3>{profilePossessive} playlists</h3>
+            </div>
+            <ListMusic size={22} />
+          </div>
+
+          <div className="spotify-playlists-grid">
+            {visiblePlaylists.map(playlist => (
+              <a
+                href={playlist.external_urls.spotify}
+                target="_blank"
+                rel="noreferrer"
+                key={playlist.id}
+                className="spotify-playlist-card"
+              >
+                <img src={getImage(playlist.images)} alt={playlist.name} />
+                <div className="playlist-info">
+                  <h4>{playlist.name}</h4>
+                  <span>{playlist.owner?.display_name || 'Spotify'}</span>
+                </div>
+                <div className="playlist-play-icon">
+                  <Play size={14} fill="currentColor" />
+                </div>
+              </a>
+            ))}
+          </div>
+
+          <ViewMoreButton
+            count={playlists.length}
+            visibleCount={4}
+            label="playlists"
+            isExpanded={expanded.playlists}
+            onClick={() => toggleExpanded('playlists')}
+          />
+        </div>
+
+        <div className="spotify-panel followed-panel">
+          <div className="spotify-section-heading">
+            <div>
+              <span>{profilePossessive} follows</span>
+              <h3>Artists {profileName} follows</h3>
+            </div>
+            <UserCheck size={22} />
+          </div>
+
+          {followedWarning && (
+            <p className="spotify-panel-note">{followedWarning}</p>
+          )}
+
+          {followedArtists.length > 0 ? (
+            <>
+              <div className="spotify-followed-grid">
+                {visibleFollowedArtists.map(artist => (
+                  <a
+                    href={artist.external_urls.spotify}
+                    target="_blank"
+                    rel="noreferrer"
+                    key={artist.id}
+                    className="spotify-followed-card"
+                  >
+                    <img src={getImage(artist.images)} alt={artist.name} />
+                    <div>
+                      <h4>{artist.name}</h4>
+                      <span>{artist.followers?.total?.toLocaleString() || 0} followers</span>
+                    </div>
+                    <ExternalLink size={15} />
+                  </a>
+                ))}
               </div>
-            </a>
-          ))}
+
+              <ViewMoreButton
+                count={followedArtists.length}
+                visibleCount={6}
+                label="followed artists"
+                isExpanded={expanded.followedArtists}
+                onClick={() => toggleExpanded('followedArtists')}
+              />
+            </>
+          ) : !followedWarning && (
+            <p className="spotify-panel-note">Nu am gasit artisti urmariti in contul conectat.</p>
+          )}
         </div>
       </div>
-
-      {/* PLAYLISTS GRID (Using iFrames for actual playback) */}
-      <div className="spotify-section">
-        <h3 className="spotify-section-title">Your Playlists</h3>
-        <div className="spotify-playlists-grid">
-
-          {playlists?.map(playlist => (
-            <a href={playlist.external_urls.spotify} target="_blank" rel="noreferrer" key={playlist.id} className="spotify-playlist-card">
-              <div className="playlist-img-wrapper">
-                <img src={playlist.images[0]?.url} alt={playlist.name} />
-                <div className="play-button-overlay">▶</div>
-              </div>
-              <h4>{playlist.name}</h4>
-              <span>{playlist.owner.display_name}</span>
-            </a>
-          ))}
-
-        </div>
-      </div>
-    </div>
+    </section>
   );
 }

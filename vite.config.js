@@ -163,7 +163,7 @@ const spotifyPlugin = () => ({
         return res.end('Lipseste SPOTIFY_CLIENT_ID in .env');
       }
       const redirectUri = 'http://127.0.0.1:5173/callback';
-      const scope = 'user-top-read playlist-read-private user-read-private';
+      const scope = 'user-top-read playlist-read-private user-read-private user-follow-read';
       const url = `https://accounts.spotify.com/authorize?response_type=code&client_id=${clientId}&scope=${encodeURIComponent(scope)}&redirect_uri=${encodeURIComponent(redirectUri)}`;
       res.statusCode = 302;
       res.setHeader('Location', url);
@@ -224,21 +224,70 @@ const spotifyPlugin = () => ({
 
       try {
         const token = await getSpotifyAccessToken();
+        const authHeaders = { Authorization: `Bearer ${token}` };
 
-        const profileRes = await fetch('https://api.spotify.com/v1/me', { headers: { Authorization: `Bearer ${token}` } });
-        const profile = await profileRes.json();
+        const fetchSpotifyJson = async url => {
+          const response = await fetch(url, { headers: authHeaders });
+          const data = await response.json();
 
-        const artistsRes = await fetch('https://api.spotify.com/v1/me/top/artists?limit=6', { headers: { Authorization: `Bearer ${token}` } });
-        const topArtists = await artistsRes.json();
+          if (!response.ok) {
+            const spotifyMessage = data?.error?.message || data?.error || 'Spotify request failed';
+            const error = new Error(spotifyMessage);
+            error.status = response.status;
+            throw error;
+          }
 
-        const playlistsRes = await fetch('https://api.spotify.com/v1/me/playlists?limit=4', { headers: { Authorization: `Bearer ${token}` } });
-        const playlists = await playlistsRes.json();
+          return data;
+        };
+
+        const fetchAllPlaylists = async () => {
+          const items = [];
+          let nextUrl = 'https://api.spotify.com/v1/me/playlists?limit=50';
+
+          while (nextUrl) {
+            const page = await fetchSpotifyJson(nextUrl);
+            items.push(...(page.items || []));
+            nextUrl = page.next;
+          }
+
+          return items;
+        };
+
+        const fetchFollowedArtists = async () => {
+          const items = [];
+          let nextUrl = 'https://api.spotify.com/v1/me/following?type=artist&limit=50';
+
+          while (nextUrl) {
+            const page = await fetchSpotifyJson(nextUrl);
+            const artistPage = page.artists || {};
+            items.push(...(artistPage.items || []));
+            nextUrl = artistPage.next;
+          }
+
+          return items;
+        };
+
+        const profile = await fetchSpotifyJson('https://api.spotify.com/v1/me');
+        const topArtists = await fetchSpotifyJson('https://api.spotify.com/v1/me/top/artists?time_range=short_term&limit=50');
+        const playlists = await fetchAllPlaylists();
+
+        let followedArtists = [];
+        const spotifyWarnings = {};
+        try {
+          followedArtists = await fetchFollowedArtists();
+        } catch (err) {
+          spotifyWarnings.followedArtists = err.status === 403
+            ? 'Reconecteaza Spotify pentru a permite accesul la artistii urmariti.'
+            : err.message;
+        }
 
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify({
           profile,
           topArtists: topArtists.items,
-          playlists: playlists.items
+          playlists,
+          followedArtists,
+          spotifyWarnings
         }));
       } catch (err) {
         res.statusCode = 500;

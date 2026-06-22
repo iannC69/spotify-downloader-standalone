@@ -532,6 +532,9 @@ function Home() {
 
               {/* Nivelul 2: Social Media Zone */}
               <div className="socials-zone-title">
+                <span className="socials-kicker">Social hub</span>
+                <h3 className="socials-title-main">Conecteaza-te cu IANNC</h3>
+                <p className="socials-title-copy">Un singur loc pentru cod, gaming, updates si continut nou.</p>
                 <h3>Conectează-te cu mine</h3>
                 <p>Urmărește activitatea mea pe rețelele sociale și platformele de gaming.</p>
               </div>
@@ -543,6 +546,8 @@ function Home() {
                     <div className="social-text-bottom">
                       <span className="platform">GitHub</span>
                       <span className="handle">@iannC69</span>
+                      <p className="social-card-meta">Cod, tool-uri si update-uri de proiect.</p>
+                      <span className="social-card-action">Open profile <ExternalLink size={14} /></span>
                     </div>
                   </div>
                 </a>
@@ -554,6 +559,8 @@ function Home() {
                     <div className="social-text-bottom">
                       <span className="platform">Steam</span>
                       <span className="handle">1iannc</span>
+                      <p className="social-card-meta">Gaming library, activity si profilul meu Steam.</p>
+                      <span className="social-card-action">Open profile <ExternalLink size={14} /></span>
                     </div>
                   </div>
                 </a>
@@ -565,6 +572,8 @@ function Home() {
                     <div className="social-text-bottom">
                       <span className="platform">Instagram</span>
                       <span className="handle">@iannc_oficial</span>
+                      <p className="social-card-meta">Story-uri, vibe si bucati din viata de zi cu zi.</p>
+                      <span className="social-card-action">Open profile <ExternalLink size={14} /></span>
                     </div>
                   </div>
                 </a>
@@ -576,6 +585,8 @@ function Home() {
                     <div className="social-text-bottom">
                       <span className="platform">YouTube</span>
                       <span className="handle">@iannc</span>
+                      <p className="social-card-meta">Video-uri, proiecte si continut pentru comunitate.</p>
+                      <span className="social-card-action">Open channel <ExternalLink size={14} /></span>
                     </div>
                   </div>
                 </a>
@@ -590,6 +601,12 @@ function Home() {
             {/* Brand Section */}
             <div className="footer-brand">
               <h2 className="footer-logo">IANNC<span className="text-primary">.RO</span></h2>
+              <p className="footer-kicker">Portfolio hub</p>
+              <p className="footer-bio-main">Developer, community builder si creator de tool-uri pentru workflow rapid.</p>
+              <div className="footer-actions">
+                <a href="#proiecte" className="footer-primary-action">Vezi proiectele <ArrowRight size={15} /></a>
+                <a href="#socials" className="footer-secondary-action">Contact rapid</a>
+              </div>
               <p className="footer-bio">Dezvoltator Web & Community Manager. Construind ecosisteme digitale performante cu pasiune și cafea.</p>
               <div className="footer-status">
                 <div className="status-dot"></div>
@@ -615,6 +632,13 @@ function Home() {
                 <Link to="/spotify" className="footer-link" style={{ color: '#1DB954' }}>Spotify Downloader</Link>
                 <a href="https://inclounge.top" target="_blank" rel="noreferrer" className="footer-link">IncLounge</a>
               </div>
+
+              <div className="footer-column footer-column-highlight">
+                <h4>Live</h4>
+                <a href="https://github.com/iannC69" target="_blank" rel="noreferrer" className="footer-link">GitHub Profile</a>
+                <a href="https://steamcommunity.com/id/1iannc/" target="_blank" rel="noreferrer" className="footer-link">Steam Profile</a>
+                <a href="https://youtube.com/@iannc" target="_blank" rel="noreferrer" className="footer-link">YouTube Channel</a>
+              </div>
             </div>
           </div>
 
@@ -624,6 +648,7 @@ function Home() {
               <a href="https://github.com/iannC69" target="_blank" rel="noreferrer" title="GitHub"><GitBranch size={20} /></a>
               <a href="https://steamcommunity.com/id/1iannc/" target="_blank" rel="noreferrer" title="Steam"><Gamepad2 size={20} /></a>
               <a href="https://instagram.com/iannc_oficial" target="_blank" rel="noreferrer" title="Instagram"><Camera size={20} /></a>
+              <a href="https://youtube.com/@iannc" target="_blank" rel="noreferrer" title="YouTube"><Video size={20} /></a>
             </div>
           </div>
         </footer>
