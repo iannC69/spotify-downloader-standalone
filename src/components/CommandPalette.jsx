@@ -1,7 +1,22 @@
 import { useState, useEffect } from 'react';
 import { Command } from 'cmdk';
 import { useNavigate } from 'react-router-dom';
-import { ClipboardList, Monitor, Home, Palette, Settings, X } from 'lucide-react';
+import {
+  Brain,
+  ClipboardList,
+  Download,
+  Home,
+  Link2,
+  MessageSquare,
+  Monitor,
+  Music,
+  Palette,
+  QrCode,
+  Scissors,
+  Settings,
+  Wrench,
+  X,
+} from 'lucide-react';
 import { playClickSound } from '../utils/sounds';
 import './CommandPalette.css';
 
@@ -54,6 +69,30 @@ export default function CommandPalette() {
             </Command.Item>
             <Command.Item onSelect={() => handleSelect(() => navigate('/tools/todo-maker'))}>
               <ClipboardList size={16} /> To-Do List Maker
+            </Command.Item>
+            <Command.Item onSelect={() => handleSelect(() => navigate('/tools/update-maker'))}>
+              <Wrench size={16} /> Update Maker
+            </Command.Item>
+            <Command.Item onSelect={() => handleSelect(() => navigate('/downloader'))}>
+              <Download size={16} /> YouTube Downloader
+            </Command.Item>
+            <Command.Item onSelect={() => handleSelect(() => navigate('/cutter'))}>
+              <Scissors size={16} /> MP3 Cutter
+            </Command.Item>
+            <Command.Item onSelect={() => handleSelect(() => navigate('/spotify'))}>
+              <Music size={16} /> Spotify Downloader
+            </Command.Item>
+            <Command.Item onSelect={() => handleSelect(() => navigate('/pomodoro'))}>
+              <Brain size={16} /> Pomodoro Focus
+            </Command.Item>
+            <Command.Item onSelect={() => handleSelect(() => navigate('/link-hub'))}>
+              <Link2 size={16} /> Link Hub Builder
+            </Command.Item>
+            <Command.Item onSelect={() => handleSelect(() => navigate('/discord-embed'))}>
+              <MessageSquare size={16} /> Discord Embed Builder
+            </Command.Item>
+            <Command.Item onSelect={() => handleSelect(() => navigate('/qr-studio'))}>
+              <QrCode size={16} /> QR Code Studio
             </Command.Item>
             <Command.Item onSelect={() => handleSelect(() => { navigate('/'); setTimeout(() => window.location.href = '#proiecte', 100); })}>
               <Monitor size={16} /> Projects

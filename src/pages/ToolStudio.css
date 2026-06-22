@@ -1,0 +1,437 @@
+.tool-studio-page {
+  min-height: 100vh;
+  padding: 7.5rem 1.2rem 3rem;
+  color: #f8fafc;
+  background:
+    radial-gradient(circle at 18% 10%, rgba(204, 255, 0, 0.08), transparent 28%),
+    radial-gradient(circle at 90% 22%, rgba(59, 130, 246, 0.08), transparent 24%),
+    #05070a;
+}
+
+.tool-studio-shell {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+}
+
+.tool-studio-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: end;
+  margin-bottom: 1rem;
+}
+
+.tool-studio-kicker {
+  width: max-content;
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.85rem;
+  padding: 0 0.75rem;
+  border-radius: 999px;
+  color: var(--color-primary);
+  background: rgba(204, 255, 0, 0.08);
+  border: 1px solid rgba(204, 255, 0, 0.14);
+  font-size: 0.75rem;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.tool-studio-hero h1 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(2.35rem, 6vw, 4.8rem);
+  line-height: 0.95;
+  font-weight: 950;
+  letter-spacing: 0;
+}
+
+.tool-studio-hero p {
+  max-width: 680px;
+  margin: 0.85rem 0 0;
+  color: #a8b3c3;
+  line-height: 1.65;
+  font-size: 1rem;
+}
+
+.tool-studio-back {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.95rem;
+  border-radius: 999px;
+  color: #e5edf7;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-weight: 850;
+}
+
+.tool-studio-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.9fr) minmax(0, 1.1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.tool-panel {
+  border-radius: 18px;
+  padding: 1rem;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.022)),
+    rgba(11, 13, 17, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+}
+
+.tool-panel h2,
+.tool-panel h3 {
+  margin: 0 0 0.8rem;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 950;
+}
+
+.tool-form-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.tool-field {
+  display: grid;
+  gap: 0.38rem;
+}
+
+.tool-field label {
+  color: #94a3b8;
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.tool-field input,
+.tool-field textarea,
+.tool-field select {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 0 0.85rem;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.24);
+  outline: none;
+  font: inherit;
+}
+
+.tool-field textarea {
+  min-height: 94px;
+  resize: vertical;
+  padding-top: 0.75rem;
+}
+
+.tool-field input[type="color"] {
+  padding: 0.28rem;
+  cursor: pointer;
+}
+
+.tool-inline {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.tool-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 0.85rem;
+}
+
+.tool-btn {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #e5edf7;
+  background: rgba(255, 255, 255, 0.055);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 900;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+}
+
+.tool-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.tool-btn:focus-visible,
+.tool-studio-back:focus-visible,
+.linkhub-preview-link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+}
+
+.tool-btn.primary {
+  color: #071008;
+  background: var(--color-primary);
+}
+
+.tool-btn.danger {
+  color: #fecaca;
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+.tool-list {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.75rem;
+}
+
+.tool-list-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.55rem;
+  align-items: center;
+  padding: 0.65rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.065);
+}
+
+.tool-list-item strong {
+  display: block;
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+.tool-list-item span {
+  display: block;
+  margin-top: 0.22rem;
+  color: #94a3b8;
+  font-size: 0.78rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preview-phone {
+  width: min(390px, 100%);
+  margin: 0 auto;
+  padding: 1rem;
+  border-radius: 28px;
+  background: #0b0d11;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.42);
+}
+
+.linkhub-preview {
+  min-height: 560px;
+  border-radius: 22px;
+  padding: 1.2rem;
+  color: #fff;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.68)),
+    var(--hub-bg, #111827);
+}
+
+.linkhub-avatar {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  margin: 1rem auto 0.8rem;
+  border: 3px solid rgba(255, 255, 255, 0.18);
+}
+
+.linkhub-preview h3 {
+  margin: 0;
+  text-align: center;
+  font-size: 1.55rem;
+}
+
+.linkhub-preview p {
+  margin: 0.45rem auto 1rem;
+  max-width: 290px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.45;
+}
+
+.linkhub-preview-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.linkhub-preview-link {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0 0.9rem;
+  border-radius: 14px;
+  color: #fff;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  font-weight: 900;
+}
+
+.discord-preview {
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 1rem;
+  border-radius: 18px;
+  background: #313338;
+  color: #dbdee1;
+}
+
+.discord-message {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 0.75rem;
+}
+
+.discord-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--color-primary);
+}
+
+.discord-author {
+  color: #fff;
+  font-weight: 900;
+  margin-bottom: 0.45rem;
+}
+
+.discord-embed {
+  border-left: 4px solid var(--embed-color, #5865f2);
+  border-radius: 8px;
+  padding: 0.9rem;
+  background: #2b2d31;
+}
+
+.discord-embed h3 {
+  margin: 0 0 0.45rem;
+  color: #fff;
+}
+
+.discord-embed p {
+  margin: 0 0 0.75rem;
+  color: #cbd5e1;
+  line-height: 1.5;
+}
+
+.discord-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.discord-field strong {
+  display: block;
+  color: #fff;
+  font-size: 0.82rem;
+}
+
+.discord-field span {
+  display: block;
+  margin-top: 0.22rem;
+  color: #cbd5e1;
+  font-size: 0.8rem;
+}
+
+.discord-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.8rem;
+}
+
+.discord-buttons span {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 0.7rem;
+  border-radius: 8px;
+  color: #fff;
+  background: #5865f2;
+  font-size: 0.8rem;
+  font-weight: 850;
+}
+
+.qr-preview-card {
+  display: grid;
+  place-items: center;
+  gap: 1rem;
+  min-height: 470px;
+  text-align: center;
+}
+
+.qr-canvas-frame {
+  padding: 1rem;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 24px 58px rgba(0, 0, 0, 0.35);
+}
+
+.qr-canvas-frame canvas {
+  display: block;
+  width: 260px;
+  height: 260px;
+}
+
+.tool-json-output {
+  max-height: 280px;
+  overflow: auto;
+  margin: 0.85rem 0 0;
+  padding: 0.9rem;
+  border-radius: 14px;
+  color: #dbeafe;
+  background: rgba(0, 0, 0, 0.32);
+  border: 1px solid rgba(255, 255, 255, 0.065);
+  font-size: 0.78rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.studio-toast {
+  color: var(--color-primary);
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+@media (max-width: 900px) {
+  .tool-studio-hero,
+  .tool-studio-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tool-studio-back {
+    width: max-content;
+  }
+}
+
+@media (max-width: 560px) {
+  .tool-studio-page {
+    padding: 6.5rem 0.75rem 2rem;
+  }
+
+  .tool-inline,
+  .discord-fields {
+    grid-template-columns: 1fr;
+  }
+}

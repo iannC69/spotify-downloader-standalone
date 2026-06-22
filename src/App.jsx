@@ -12,6 +12,9 @@ import YoutubeDownloader from './pages/YoutubeDownloader';
 import Mp3Cutter from './pages/Mp3Cutter';
 import SpotifyDownloader from './pages/SpotifyDownloader';
 import Pomodoro from './pages/Pomodoro';
+import LinkHubBuilder from './pages/LinkHubBuilder';
+import DiscordEmbedBuilder from './pages/DiscordEmbedBuilder';
+import QRCodeStudio from './pages/QRCodeStudio';
 
 function App() {
   useEffect(() => {
@@ -42,6 +45,9 @@ function App() {
               <Route path="/cutter" element={<Mp3Cutter />} />
               <Route path="/spotify" element={<SpotifyDownloader />} />
               <Route path="/pomodoro" element={<Pomodoro />} />
+              <Route path="/link-hub" element={<LinkHubBuilder />} />
+              <Route path="/discord-embed" element={<DiscordEmbedBuilder />} />
+              <Route path="/qr-studio" element={<QRCodeStudio />} />
             </Routes>
         </main>
       </div>

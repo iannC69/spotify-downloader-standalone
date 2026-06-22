@@ -6,7 +6,10 @@ import {
   Home,
   Layers,
   LayoutList,
+  Link2,
   Mail,
+  MessageSquare,
+  QrCode,
   Scissors,
   User,
   Video,
@@ -80,6 +83,18 @@ function Navbar() {
             <Link to="/pomodoro" className={`tool-dock-link ${isActive('/pomodoro') ? 'active' : ''}`}>
               <Brain size={16} />
               <span>Pomodoro</span>
+            </Link>
+            <Link to="/link-hub" className={`tool-dock-link ${isActive('/link-hub') ? 'active' : ''}`}>
+              <Link2 size={16} />
+              <span>Link Hub</span>
+            </Link>
+            <Link to="/discord-embed" className={`tool-dock-link ${isActive('/discord-embed') ? 'active' : ''}`}>
+              <MessageSquare size={16} />
+              <span>Embed</span>
+            </Link>
+            <Link to="/qr-studio" className={`tool-dock-link ${isActive('/qr-studio') ? 'active' : ''}`}>
+              <QrCode size={16} />
+              <span>QR</span>
             </Link>
           </div>
         </div>

@@ -20,6 +20,7 @@
     "lucide-react": "^1.21.0",
     "music-metadata": "^11.13.0",
     "music-metadata-browser": "^2.5.11",
+    "qrcode": "^1.5.4",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-parallax-tilt": "^1.7.332",

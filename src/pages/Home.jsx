@@ -5,7 +5,8 @@ import {
   Gamepad2, GitBranch, Camera, Video,
   ArrowRight, BadgeCheck, Server,
   Cpu, ChevronDown, Layers, Mail, Code, Bot, Globe, ExternalLink, LayoutList,
-  MonitorPlay, MemoryStick, CircuitBoard, Mouse, Keyboard, Headphones, Monitor, Scissors, Brain
+  MonitorPlay, MemoryStick, CircuitBoard, Mouse, Keyboard, Headphones, Monitor, Scissors, Brain,
+  Link2, MessageSquare, QrCode
 } from 'lucide-react';
 import Tilt from 'react-parallax-tilt';
 import Navbar from '../components/Navbar';
@@ -148,11 +149,11 @@ function Home() {
 
               <div className="projects-overview" aria-label="Rezumat proiecte">
                 <div>
-                  <strong>03</strong>
+                  <strong>09</strong>
                   <span>Live</span>
                 </div>
                 <div>
-                  <strong>04</strong>
+                  <strong>09</strong>
                   <span>Tools</span>
                 </div>
                 <div>
@@ -360,6 +361,96 @@ function Home() {
                       <span>Aesthetic</span>
                     </div>
                     <span className="project-action-link" style={{ color: '#fff', background: '#a855f7' }}>
+                      Deschide <ArrowRight size={16} />
+                    </span>
+                  </Link>
+                </motion.div>
+              </Tilt>
+
+              {/* Project: Link Hub Builder */}
+              <Tilt className="tilt-wrapper" tiltMaxAngleX={4} tiltMaxAngleY={4} glareEnable={true} glareMaxOpacity={0.1} scale={1.02} transitionSpeed={1500}>
+                <motion.div className="story-card project-card compact-project-card incoming-project" variants={itemVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+                  <Link to="/link-hub" className="todo-project-card-link" aria-label="Deschide Link Hub Builder">
+                    <div className="project-card-top">
+                      <span className="project-tag cyan">SOCIAL TOOL</span>
+                      <span className="project-status-pill">New</span>
+                    </div>
+                    <div className="project-header">
+                      <div className="project-icon-box cyan">
+                        <Link2 size={24} />
+                      </div>
+                      <div>
+                        <h4>Link Hub Builder</h4>
+                        <span>Linktree-style pages</span>
+                      </div>
+                    </div>
+                    <p>Creeaza rapid un hub cu Discord, YouTube, Steam, proiecte si social links.</p>
+                    <div className="project-feature-row">
+                      <span>Live Preview</span>
+                      <span>Export JSON</span>
+                      <span>Branding</span>
+                    </div>
+                    <span className="project-action-link cyan">
+                      Deschide <ArrowRight size={16} />
+                    </span>
+                  </Link>
+                </motion.div>
+              </Tilt>
+
+              {/* Project: Discord Embed Builder */}
+              <Tilt className="tilt-wrapper" tiltMaxAngleX={4} tiltMaxAngleY={4} glareEnable={true} glareMaxOpacity={0.1} scale={1.02} transitionSpeed={1500}>
+                <motion.div className="story-card project-card compact-project-card incoming-project" variants={itemVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+                  <Link to="/discord-embed" className="todo-project-card-link" aria-label="Deschide Discord Embed Builder">
+                    <div className="project-card-top">
+                      <span className="project-tag purple">DISCORD TOOL</span>
+                      <span className="project-status-pill">New</span>
+                    </div>
+                    <div className="project-header">
+                      <div className="project-icon-box purple">
+                        <MessageSquare size={24} />
+                      </div>
+                      <div>
+                        <h4>Discord Embed Builder</h4>
+                        <span>Visual JSON builder</span>
+                      </div>
+                    </div>
+                    <p>Construieste embed-uri cu fields, buttons, culori, preview si export JSON.</p>
+                    <div className="project-feature-row">
+                      <span>Preview</span>
+                      <span>Buttons</span>
+                      <span>JSON</span>
+                    </div>
+                    <span className="project-action-link purple">
+                      Deschide <ArrowRight size={16} />
+                    </span>
+                  </Link>
+                </motion.div>
+              </Tilt>
+
+              {/* Project: QR Code Studio */}
+              <Tilt className="tilt-wrapper" tiltMaxAngleX={4} tiltMaxAngleY={4} glareEnable={true} glareMaxOpacity={0.1} scale={1.02} transitionSpeed={1500}>
+                <motion.div className="story-card project-card compact-project-card incoming-project" variants={itemVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+                  <Link to="/qr-studio" className="todo-project-card-link" aria-label="Deschide QR Code Studio">
+                    <div className="project-card-top">
+                      <span className="project-tag warning">UTILITY TOOL</span>
+                      <span className="project-status-pill">New</span>
+                    </div>
+                    <div className="project-header">
+                      <div className="project-icon-box warning">
+                        <QrCode size={24} />
+                      </div>
+                      <div>
+                        <h4>QR Code Studio</h4>
+                        <span>Custom QR generator</span>
+                      </div>
+                    </div>
+                    <p>Genereaza QR pentru URL, Discord, Spotify, Wi-Fi, contact card si text custom.</p>
+                    <div className="project-feature-row">
+                      <span>Wi-Fi</span>
+                      <span>vCard</span>
+                      <span>PNG</span>
+                    </div>
+                    <span className="project-action-link warning">
                       Deschide <ArrowRight size={16} />
                     </span>
                   </Link>
@@ -630,6 +721,10 @@ function Home() {
                 <Link to="/downloader" className="footer-link text-danger">YouTube Downloader</Link>
                 <Link to="/cutter" className="footer-link" style={{ color: '#a855f7' }}>MP3 Cutter</Link>
                 <Link to="/spotify" className="footer-link" style={{ color: '#1DB954' }}>Spotify Downloader</Link>
+                <Link to="/pomodoro" className="footer-link" style={{ color: '#c084fc' }}>Pomodoro Focus</Link>
+                <Link to="/link-hub" className="footer-link">Link Hub Builder</Link>
+                <Link to="/discord-embed" className="footer-link">Discord Embed Builder</Link>
+                <Link to="/qr-studio" className="footer-link">QR Code Studio</Link>
                 <a href="https://inclounge.top" target="_blank" rel="noreferrer" className="footer-link">IncLounge</a>
               </div>
 
