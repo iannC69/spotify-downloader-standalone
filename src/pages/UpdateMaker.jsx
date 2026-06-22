@@ -853,21 +853,90 @@ function UpdateMaker() {
 
   const handleExportImage = async () => {
     const element = document.querySelector('.preview-box-container');
+    const msgContainer = document.querySelector('.discord-message-container');
+    const appContainer = document.querySelector('.app-container');
+    const prevSection = document.querySelector('.preview-section');
     if (!element) return;
     
     setExporting(true);
     try {
-      const originalRadius = element.style.borderRadius;
+      // Save original styles to restore later
+      const origRadius = element.style.borderRadius;
+      const origElementHeight = element.style.height;
+      const origElementFlex = element.style.flex;
+      const origMsgOverflow = msgContainer ? msgContainer.style.overflow : '';
+      const origMsgHeight = msgContainer ? msgContainer.style.height : '';
+      const origMsgFlex = msgContainer ? msgContainer.style.flex : '';
+      const origAppOverflow = appContainer ? appContainer.style.overflow : '';
+      const origAppHeight = appContainer ? appContainer.style.height : '';
+      const origPrevOverflow = prevSection ? prevSection.style.overflow : '';
+      const origPrevHeight = prevSection ? prevSection.style.height : '';
+      
+      const zoomContainer = element.children[0];
+      const origZoom = zoomContainer ? zoomContainer.style.zoom : '';
+      const origZoomFlex = zoomContainer ? zoomContainer.style.flex : '';
+      
+      // Temporarily expand everything and remove zoom so html2canvas sees the full correct content
       element.style.borderRadius = '0px';
+      element.style.height = 'max-content';
+      element.style.flex = 'none';
+      
+      if (zoomContainer) {
+        zoomContainer.style.zoom = '100%';
+        zoomContainer.style.flex = 'none';
+        zoomContainer.style.height = 'max-content';
+      }
+      
+      if (appContainer) {
+        appContainer.style.overflow = 'visible';
+        appContainer.style.height = 'auto';
+      }
+      if (prevSection) {
+        prevSection.style.overflow = 'visible';
+        prevSection.style.height = 'auto';
+      }
+      if (msgContainer) {
+        msgContainer.style.overflow = 'visible';
+        msgContainer.style.height = 'max-content';
+        msgContainer.style.flex = 'none';
+      }
+      
+      // Wait a bit for the DOM to reflow
+      await new Promise(r => setTimeout(r, 150));
       
       const canvas = await html2canvas(element, {
         backgroundColor: '#06090e',
         scale: 2,
         useCORS: true,
-        logging: false
+        logging: false,
+        windowHeight: element.scrollHeight + 100,
+        height: element.scrollHeight
       });
       
-      element.style.borderRadius = originalRadius;
+      // Restore original styles
+      element.style.borderRadius = origRadius;
+      element.style.height = origElementHeight;
+      element.style.flex = origElementFlex;
+      
+      if (zoomContainer) {
+        zoomContainer.style.zoom = origZoom;
+        zoomContainer.style.flex = origZoomFlex;
+        zoomContainer.style.height = '';
+      }
+      
+      if (appContainer) {
+        appContainer.style.overflow = origAppOverflow;
+        appContainer.style.height = origAppHeight;
+      }
+      if (prevSection) {
+        prevSection.style.overflow = origPrevOverflow;
+        prevSection.style.height = origPrevHeight;
+      }
+      if (msgContainer) {
+        msgContainer.style.overflow = origMsgOverflow;
+        msgContainer.style.height = origMsgHeight;
+        msgContainer.style.flex = origMsgFlex;
+      }
       
       const image = canvas.toDataURL("image/png");
       const link = document.createElement('a');
@@ -1001,7 +1070,7 @@ function UpdateMaker() {
 
 
   return (
-    <div className={`app-container ${isZenMode ? 'zen-mode' : ''}`} style={{ '--embed-color': state.embedColor }}>
+    <div className={`app-container ${isZenMode ? 'zen-mode' : ''}`} style={{ '--embed-color': state.embedColor }} data-lenis-prevent="true">
       {isZenMode && (
         <button className="zen-toggle-btn" onClick={() => setIsZenMode(false)}>
           <Minimize size={18} /> Ieși din Focus Mode (Esc)
