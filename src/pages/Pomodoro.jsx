@@ -1,13 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ArrowLeft,
-  BatteryCharging,
   CheckCircle2,
   Circle,
   Clock3,
   Coffee,
-  Crosshair,
-  Flame,
   Headphones,
   Link as LinkIcon,
   ListChecks,
@@ -17,33 +14,47 @@ import {
   Plus,
   Radio,
   RotateCcw,
-  Settings2,
   SkipForward,
   Sparkles,
   Target,
-  Trash2,
   Volume2,
   X
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import { formatPomodoroTime, usePomodoroSession } from '../context/pomodoroSessionCore';
 import './Pomodoro.css';
 
 const STORAGE_KEY = 'pomodoroFocusState_v1';
-
-const PRESETS = [
-  { id: 'focus', label: 'Focus', minutes: 25, icon: Crosshair, accent: '#D2FF00', description: 'Pentru task-uri normale.' },
-  { id: 'deep', label: 'Deep Work', minutes: 50, icon: Flame, accent: '#38bdf8', description: 'Pentru munca serioasa.' },
-  { id: 'short', label: 'Short Break', minutes: 5, icon: Coffee, accent: '#22c55e', description: 'Respira putin.' },
-  { id: 'long', label: 'Long Break', minutes: 15, icon: BatteryCharging, accent: '#a78bfa', description: 'Reset complet.' },
-  { id: 'custom', label: 'Custom', minutes: 30, icon: Settings2, accent: '#f97316', description: 'Setezi tu durata.' }
-];
+const TODO_STORAGE_KEY = 'todoMakerState_v1';
 
 const DEFAULT_TASKS = [
   { id: 'focus-1', title: 'Alege un task important', done: false },
   { id: 'focus-2', title: 'Inchide tab-urile inutile', done: false },
   { id: 'focus-3', title: 'Noteaza rezultatul dupa sesiune', done: false }
 ];
+
+const loadTodoBoard = () => {
+  if (typeof window === 'undefined') return { tasks: [] };
+
+  try {
+    const raw = localStorage.getItem(TODO_STORAGE_KEY);
+    if (!raw) return { tasks: [] };
+    const parsed = JSON.parse(raw);
+    return { tasks: Array.isArray(parsed.tasks) ? parsed.tasks : [] };
+  } catch {
+    return { tasks: [] };
+  }
+};
+
+const createTodoTaskId = (tasks) => {
+  const highest = tasks.reduce((max, task) => {
+    const number = Number(String(task.id || '').replace(/\D/g, ''));
+    return Number.isFinite(number) ? Math.max(max, number) : max;
+  }, 100);
+
+  return `TD-${highest + 1}`;
+};
 
 const getTodayKey = () => new Date().toISOString().slice(0, 10);
 
@@ -52,16 +63,6 @@ const clampNumber = (value, min, max) => {
   if (Number.isNaN(parsed)) return min;
   return Math.min(Math.max(parsed, min), max);
 };
-
-const formatTime = (seconds) => {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
-  const s = Math.floor(seconds % 60).toString().padStart(2, '0');
-
-  return h > 0 ? `${h}:${m}:${s}` : `${m}:${s}`;
-};
-
-const isWorkMode = (modeId) => modeId === 'focus' || modeId === 'deep' || modeId === 'custom';
 
 const createEmbedUrl = (url) => {
   const trimmed = url.trim();
@@ -127,42 +128,64 @@ const loadState = () => {
 
 function Pomodoro() {
   const [savedState] = useState(() => loadState());
-  const [modeId, setModeId] = useState('focus');
-  const [customMinutes, setCustomMinutes] = useState(savedState.customMinutes);
-  const [timeLeft, setTimeLeft] = useState(PRESETS[0].minutes * 60);
-  const [isRunning, setIsRunning] = useState(false);
-  const [dailyGoal, setDailyGoal] = useState(savedState.dailyGoal);
-  const [completedSessions, setCompletedSessions] = useState(savedState.completedSessions);
-  const [focusTask, setFocusTask] = useState(savedState.focusTask);
+  const {
+    activePreset,
+    completedPercent,
+    completedSessions,
+    customMinutes,
+    dailyGoal,
+    finishNow,
+    focusTask,
+    isRunning,
+    modeId,
+    presets,
+    progress,
+    resetDay: resetPomodoroDay,
+    resetTimer,
+    sessionNote,
+    setDailyGoal,
+    setFocusTask,
+    setMode,
+    startBreak,
+    timeLeft,
+    toggleTimer,
+    updateCustomMinutes,
+  } = usePomodoroSession();
   const [tasks, setTasks] = useState(savedState.tasks);
+  const [todoBoard, setTodoBoard] = useState(() => loadTodoBoard());
   const [taskDraft, setTaskDraft] = useState('');
   const [mediaUrl, setMediaUrl] = useState(savedState.mediaUrl);
   const [embedUrl, setEmbedUrl] = useState(savedState.embedUrl);
   const [mediaError, setMediaError] = useState('');
-  const [sessionNote, setSessionNote] = useState('Ready when you are.');
-
-  const timerRef = useRef(null);
-  const alarmSound = useRef(null);
-  const finishedRef = useRef(false);
-
-  const activePreset = useMemo(() => PRESETS.find((preset) => preset.id === modeId) || PRESETS[0], [modeId]);
-  const activeSeconds = modeId === 'custom' ? customMinutes * 60 : activePreset.minutes * 60;
-  const progress = Math.min(100, Math.max(0, ((activeSeconds - timeLeft) / activeSeconds) * 100));
-  const completedPercent = Math.min(100, Math.round((completedSessions / dailyGoal) * 100));
-  const doneTasks = tasks.filter((task) => task.done).length;
+  const todoTasks = todoBoard.tasks.filter((task) => task.status !== 'done');
+  const doneTodoTasks = todoBoard.tasks.filter((task) => task.status === 'done').length;
   const ActiveIcon = activePreset.icon;
 
   useEffect(() => {
-    alarmSound.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-    alarmSound.current.loop = true;
+    const syncTodoBoard = () => setTodoBoard(loadTodoBoard());
+    window.addEventListener('storage', syncTodoBoard);
+    window.addEventListener('focus', syncTodoBoard);
 
     return () => {
-      alarmSound.current?.pause();
+      window.removeEventListener('storage', syncTodoBoard);
+      window.removeEventListener('focus', syncTodoBoard);
     };
   }, []);
 
+  const updateTodoTasks = (updater) => {
+    setTodoBoard((current) => {
+      const nextTasks = typeof updater === 'function' ? updater(current.tasks) : updater;
+      const previous = JSON.parse(localStorage.getItem(TODO_STORAGE_KEY) || '{}');
+      const nextBoard = { ...previous, tasks: nextTasks };
+      localStorage.setItem(TODO_STORAGE_KEY, JSON.stringify(nextBoard));
+      return { ...current, tasks: nextTasks };
+    });
+  };
+
   useEffect(() => {
+    const previous = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
     const payload = {
+      ...previous,
       dailyGoal,
       completedSessions,
       savedDay: getTodayKey(),
@@ -176,132 +199,39 @@ function Pomodoro() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
   }, [completedSessions, customMinutes, dailyGoal, embedUrl, focusTask, mediaUrl, tasks]);
 
-  const completeCurrentSession = useCallback(() => {
-    if (finishedRef.current) return;
-    finishedRef.current = true;
-    setIsRunning(false);
-    alarmSound.current?.play().catch(() => {});
-
-    if (isWorkMode(modeId)) {
-      setCompletedSessions((current) => current + 1);
-      setSessionNote('Sesiune finalizata. Ia o pauza si revino fresh.');
-    } else {
-      setSessionNote('Pauza gata. Alege urmatorul focus.');
-    }
-  }, [modeId]);
-
-  useEffect(() => {
-    if (!isRunning) {
-      clearInterval(timerRef.current);
-      return undefined;
-    }
-
-    timerRef.current = setInterval(() => {
-      setTimeLeft((current) => {
-        if (current <= 1) {
-          clearInterval(timerRef.current);
-          completeCurrentSession();
-          return 0;
-        }
-
-        return current - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timerRef.current);
-  }, [completeCurrentSession, isRunning, modeId]);
-
-  const stopAlarm = () => {
-    alarmSound.current?.pause();
-    if (alarmSound.current) alarmSound.current.currentTime = 0;
-  };
-
-  const setMode = (presetId) => {
-    const preset = PRESETS.find((item) => item.id === presetId) || PRESETS[0];
-    const seconds = preset.id === 'custom' ? customMinutes * 60 : preset.minutes * 60;
-
-    stopAlarm();
-    finishedRef.current = false;
-    setIsRunning(false);
-    setModeId(preset.id);
-    setTimeLeft(seconds);
-    setSessionNote(preset.description);
-  };
-
-  const updateCustomMinutes = (value) => {
-    const next = clampNumber(value, 1, 180);
-    setCustomMinutes(next);
-
-    if (modeId === 'custom') {
-      finishedRef.current = false;
-      setIsRunning(false);
-      setTimeLeft(next * 60);
-    }
-  };
-
-  const toggleTimer = () => {
-    stopAlarm();
-    finishedRef.current = false;
-    setIsRunning((current) => !current);
-    setSessionNote(isRunning ? 'Timer pauzat.' : 'Focus pornit. Ramai pe un singur lucru.');
-  };
-
-  const resetTimer = () => {
-    stopAlarm();
-    finishedRef.current = false;
-    setIsRunning(false);
-    setTimeLeft(activeSeconds);
-    setSessionNote('Timer resetat.');
-  };
-
-  const finishNow = () => {
-    stopAlarm();
-    completeCurrentSession();
-    setTimeLeft(0);
-  };
-
-  const startBreak = () => {
-    setMode(completedSessions > 0 && completedSessions % 4 === 0 ? 'long' : 'short');
-  };
-
   const addTask = (event) => {
     event.preventDefault();
     const title = taskDraft.trim();
     if (!title) return;
 
-    const task = {
-      id: `focus-${Date.now()}`,
-      title,
-      done: false
-    };
+    updateTodoTasks((current) => {
+      const nextTask = {
+        id: createTodoTaskId(current),
+        title,
+        status: 'todo',
+        priority: 'medium',
+        categoryId: 'general',
+        important: false,
+        dueDate: getTodayKey(),
+        createdAt: getTodayKey(),
+        note: '',
+        checklist: []
+      };
 
-    setTasks((current) => [task, ...current]);
+      return [nextTask, ...current];
+    });
+
     if (!focusTask) setFocusTask(title);
     setTaskDraft('');
   };
 
-  const toggleTask = (taskId) => {
-    setTasks((current) => current.map((task) => (
-      task.id === taskId ? { ...task, done: !task.done } : task
-    )));
-  };
-
-  const deleteTask = (taskId) => {
-    setTasks((current) => current.filter((task) => task.id !== taskId));
-  };
-
   const pickTask = (task) => {
     setFocusTask(task.title);
-    setSessionNote('Task setat pentru sesiunea curenta.');
   };
 
-  const resetDay = () => {
-    stopAlarm();
-    setIsRunning(false);
-    setCompletedSessions(0);
+  const handleResetDay = () => {
+    resetPomodoroDay();
     setTasks(DEFAULT_TASKS);
-    setFocusTask('');
-    setSessionNote('Zi resetata.');
   };
 
   const applyMedia = (event) => {
@@ -345,7 +275,7 @@ function Pomodoro() {
               </div>
             </div>
 
-            <button type="button" className="focus-reset-day" onClick={resetDay}>
+            <button type="button" className="focus-reset-day" onClick={handleResetDay}>
               <RotateCcw size={16} />
               Reset day
             </button>
@@ -362,7 +292,7 @@ function Pomodoro() {
             </div>
             <div>
               <span>Tasks</span>
-              <strong>{doneTasks}/{tasks.length}</strong>
+              <strong>{doneTodoTasks}/{todoBoard.tasks.length}</strong>
             </div>
             <div>
               <span>Mode</span>
@@ -373,7 +303,7 @@ function Pomodoro() {
           <div className="focus-layout">
             <section className="focus-panel timer-card">
               <div className="preset-row">
-                {PRESETS.map((preset) => {
+                {presets.map((preset) => {
                   const Icon = preset.icon;
 
                   return (
@@ -431,7 +361,7 @@ function Pomodoro() {
                       <ActiveIcon size={18} />
                       {activePreset.label}
                     </span>
-                    <strong>{formatTime(timeLeft)}</strong>
+                    <strong>{formatPomodoroTime(timeLeft)}</strong>
                     <p>{focusTask || 'Alege un task pentru focus.'}</p>
                   </div>
                 </div>
@@ -489,9 +419,9 @@ function Pomodoro() {
                 <div className="panel-heading">
                   <span>
                     <ListChecks size={18} />
-                    Focus queue
+                    To-Do Maker tasks
                   </span>
-                  <strong>{doneTasks}/{tasks.length}</strong>
+                  <strong>{todoTasks.length} open</strong>
                 </div>
 
                 <form className="task-add-form" onSubmit={addTask}>
@@ -506,19 +436,37 @@ function Pomodoro() {
                 </form>
 
                 <div className="task-list">
-                  {tasks.map((task) => (
-                    <div className={task.done ? 'focus-task done' : 'focus-task'} key={task.id}>
-                      <button type="button" className="task-check" onClick={() => toggleTask(task.id)} title="Bifeaza">
-                        {task.done ? <CheckCircle2 size={17} /> : <Circle size={17} />}
+                  {todoTasks.length ? todoTasks.map((task) => (
+                    <div className={focusTask === task.title ? 'focus-task selected' : 'focus-task'} key={task.id}>
+                      <button
+                        type="button"
+                        className="task-check"
+                        onClick={() => updateTodoTasks((current) => current.map((item) => (
+                          item.id === task.id ? { ...item, status: 'done' } : item
+                        )))}
+                        title="Finalizeaza in To-Do Maker"
+                      >
+                        <Circle size={17} />
                       </button>
                       <button type="button" className="task-title-btn" onClick={() => pickTask(task)}>
                         {task.title}
                       </button>
-                      <button type="button" className="task-delete" onClick={() => deleteTask(task.id)} title="Sterge">
-                        <Trash2 size={15} />
+                      <button
+                        type="button"
+                        className="task-delete"
+                        onClick={() => updateTodoTasks((current) => current.map((item) => (
+                          item.id === task.id ? { ...item, status: 'progress', important: true } : item
+                        )))}
+                        title="Muta in progress"
+                      >
+                        <CheckCircle2 size={15} />
                       </button>
                     </div>
-                  ))}
+                  )) : (
+                    <div className="focus-task empty">
+                      <span>Nu ai task-uri deschise in To-Do Maker.</span>
+                    </div>
+                  )}
                 </div>
               </section>
             </aside>

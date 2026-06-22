@@ -64,10 +64,6 @@
 body {
   font-family: 'Plus Jakarta Sans', sans-serif;
   background-color: var(--bg-color);
-  background-image:
-    radial-gradient(ellipse at top left, rgba(210, 255, 0, 0.1) 0%, transparent 50%),
-    radial-gradient(ellipse at center right, rgba(210, 255, 0, 0.05) 0%, transparent 60%);
-  background-attachment: fixed;
   color: var(--text-main);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;

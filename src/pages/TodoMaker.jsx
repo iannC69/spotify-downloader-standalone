@@ -32,6 +32,7 @@ import {
   Users,
   X
 } from 'lucide-react';
+import { usePomodoroSession } from '../context/pomodoroSessionCore';
 import './TodoMaker.css';
 
 const STORAGE_KEY = 'todoMakerState_v1';
@@ -300,6 +301,7 @@ function CategoryIcon({ icon, size = 14 }) {
 }
 
 function TodoMaker() {
+  const { focusTask, isRunning, setFocusTask, toggleTimer } = usePomodoroSession();
   const [board, setBoard] = useState(loadBoard);
   const [draft, setDraft] = useState({
     title: '',
@@ -480,6 +482,8 @@ function TodoMaker() {
     updateTask(nextFocusTask.id, { status: 'progress', important: true });
     setSelectedTaskId(nextFocusTask.id);
     setQuickFilter('focus');
+    setFocusTask(nextFocusTask.title);
+    if (!isRunning) toggleTimer();
   };
 
   const deleteTask = (taskId) => {
@@ -855,6 +859,13 @@ function TodoMaker() {
               </button>
             ) : (
               <p>Nu ai task-uri deschise.</p>
+            )}
+            {focusTask && (
+              <div className="pomodoro-linked-task">
+                <Clock3 size={15} />
+                <span>Pomodoro linked: {focusTask}</span>
+                <Link to="/pomodoro">Open</Link>
+              </div>
             )}
           </div>
         </div>

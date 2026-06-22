@@ -282,6 +282,43 @@
   margin: 3px 0 0;
 }
 
+.pomodoro-linked-task {
+  margin-top: 10px;
+  min-height: 34px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  color: #f8fafc;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(210, 255, 0, 0.14);
+}
+
+.pomodoro-linked-task svg {
+  color: var(--primary);
+}
+
+.pomodoro-linked-task span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.pomodoro-linked-task a {
+  color: #0b0d10;
+  background: var(--primary);
+  border-radius: 999px;
+  padding: 5px 8px;
+  text-decoration: none;
+  font-size: 0.72rem;
+  font-weight: 950;
+}
+
 .category-list {
   display: flex;
   align-items: center;

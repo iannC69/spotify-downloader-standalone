@@ -1,0 +1,112 @@
+.pomodoro-mini-widget {
+  position: fixed;
+  right: 1.1rem;
+  bottom: 1.1rem;
+  z-index: 1200;
+  width: min(360px, calc(100vw - 1.4rem));
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.78rem;
+  border-radius: 18px;
+  color: #fff;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)),
+    rgba(8, 10, 14, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(18px);
+  overflow: hidden;
+}
+
+.mini-progress-bar {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.mini-progress-bar span {
+  display: block;
+  width: var(--mini-progress);
+  height: 100%;
+  background: var(--mini-accent);
+  transition: width 0.3s ease;
+}
+
+.mini-widget-icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  color: #071008;
+  background: var(--mini-accent);
+}
+
+.mini-widget-copy {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.mini-widget-copy span {
+  color: var(--mini-accent);
+  font-size: 0.68rem;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.mini-widget-copy strong {
+  color: #fff;
+  font-size: 1.16rem;
+  line-height: 1;
+}
+
+.mini-widget-copy small {
+  color: #9aa7ba;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 750;
+}
+
+.mini-widget-actions {
+  display: inline-flex;
+  gap: 0.35rem;
+}
+
+.mini-widget-actions button,
+.mini-widget-actions a {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 11px;
+  color: #e5edf7;
+  background: rgba(255, 255, 255, 0.055);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.mini-widget-actions button:hover,
+.mini-widget-actions a:hover {
+  color: #071008;
+  background: var(--mini-accent);
+}
+
+@media (max-width: 560px) {
+  .pomodoro-mini-widget {
+    right: 0.7rem;
+    bottom: 0.7rem;
+    grid-template-columns: 38px minmax(0, 1fr);
+  }
+
+  .mini-widget-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
+}

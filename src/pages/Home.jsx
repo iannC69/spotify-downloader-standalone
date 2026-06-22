@@ -12,6 +12,7 @@ import Tilt from 'react-parallax-tilt';
 import Navbar from '../components/Navbar';
 import LiveStatus from '../components/LiveStatus';
 import SpotifyProfile from '../components/SpotifyProfile';
+import ContactAndReviews from '../components/ContactAndReviews';
 import myGames from '../data/myGames.json';
 import './Home.css';
 
@@ -19,7 +20,6 @@ import './Home.css';
 function Home() {
   const { scrollYProgress } = useScroll();
   const y = useTransform(scrollYProgress, [0, 1], ['0%', '50%']);
-
   // Reference for intersection/animation
   const gearRef = useRef(null);
 
@@ -72,7 +72,7 @@ function Home() {
 
               <motion.div className="hero-action-buttons" variants={itemVariants}>
                 <a href="#proiecte" className="btn btn-primary">Vezi Proiectele <ArrowRight size={18} /></a>
-                <a href="#socials" className="btn btn-secondary">Contact <Mail size={18} /></a>
+                <a href="#contact" className="btn btn-secondary">Contact <Mail size={18} /></a>
               </motion.div>
             </motion.div>
 
@@ -623,61 +623,93 @@ function Home() {
 
               {/* Nivelul 2: Social Media Zone */}
               <div className="socials-zone-title">
-                <span className="socials-kicker">Social hub</span>
-                <h3 className="socials-title-main">Conecteaza-te cu IANNC</h3>
-                <p className="socials-title-copy">Un singur loc pentru cod, gaming, updates si continut nou.</p>
-                <h3>Conectează-te cu mine</h3>
-                <p>Urmărește activitatea mea pe rețelele sociale și platformele de gaming.</p>
+                <span className="socials-kicker">Hai să colaborăm</span>
+                <h3 className="socials-title-main">Rămâi <span className="text-gradient" style={{ background: 'linear-gradient(135deg, #D2FF00, #a3f000)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Conectat</span></h3>
+                <p className="socials-title-copy">Găsești codul meu, proiectele, gameplay-ul și viața de zi cu zi mai jos. Alege platforma preferată pentru a mă contacta.</p>
               </div>
-              <motion.div className="socials-horizontal-grid" variants={itemVariants}>
-                <a href="https://github.com/iannC69" target="_blank" rel="noreferrer" className="social-bento-card github-card">
-                  <GitBranch size={120} className="social-bg-icon" />
+              <motion.div className="socials-bento-grid" variants={itemVariants}>
+                {/* Email Card (Wide) */}
+                <div 
+                  className="social-bento-card mail-card" 
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
+                >
+                  <Mail size={160} className="social-bg-icon" />
                   <div className="social-bento-content">
-                    <GitBranch size={28} className="social-icon-top" />
+                    <div className="social-icon-wrapper">
+                      <Mail size={28} className="social-icon-top" />
+                    </div>
+                    <div className="social-text-bottom">
+                      <span className="platform">Contact Direct</span>
+                      <span className="handle">Deschide Formularul</span>
+                      <p className="social-card-meta">Cel mai rapid mod pentru colaborări, proiecte sau întrebări de business. Click pentru detalii.</p>
+                      <span className="social-card-action" style={{ transition: 'all 0.3s ease' }}>
+                        Trimite un mesaj <ArrowRight size={14} />
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* GitHub Card */}
+                <a href="https://github.com/iannC69" target="_blank" rel="noreferrer" className="social-bento-card github-card">
+                  <GitBranch size={160} className="social-bg-icon" />
+                  <div className="social-bento-content">
+                    <div className="social-icon-wrapper">
+                      <GitBranch size={28} className="social-icon-top" />
+                    </div>
                     <div className="social-text-bottom">
                       <span className="platform">GitHub</span>
                       <span className="handle">@iannC69</span>
-                      <p className="social-card-meta">Cod, tool-uri si update-uri de proiect.</p>
-                      <span className="social-card-action">Open profile <ExternalLink size={14} /></span>
+                      <p className="social-card-meta">Cod open-source, tool-uri și repo-uri publice.</p>
+                      <span className="social-card-action">Vezi profilul <ExternalLink size={14} /></span>
                     </div>
                   </div>
                 </a>
 
+                {/* Steam Card */}
                 <a href="https://steamcommunity.com/id/1iannc/" target="_blank" rel="noreferrer" className="social-bento-card steam-card">
-                  <Gamepad2 size={120} className="social-bg-icon" />
+                  <Gamepad2 size={160} className="social-bg-icon" />
                   <div className="social-bento-content">
-                    <Gamepad2 size={28} className="social-icon-top" />
+                    <div className="social-icon-wrapper">
+                      <Gamepad2 size={28} className="social-icon-top" />
+                    </div>
                     <div className="social-text-bottom">
                       <span className="platform">Steam</span>
                       <span className="handle">1iannc</span>
-                      <p className="social-card-meta">Gaming library, activity si profilul meu Steam.</p>
-                      <span className="social-card-action">Open profile <ExternalLink size={14} /></span>
+                      <p className="social-card-meta">Gaming library, activity și profilul meu Steam.</p>
+                      <span className="social-card-action">Vezi profilul <ExternalLink size={14} /></span>
                     </div>
                   </div>
                 </a>
 
+                {/* Instagram Card */}
                 <a href="https://instagram.com/iannc_oficial" target="_blank" rel="noreferrer" className="social-bento-card insta-card">
-                  <Camera size={120} className="social-bg-icon" />
+                  <Camera size={160} className="social-bg-icon" />
                   <div className="social-bento-content">
-                    <Camera size={28} className="social-icon-top" />
+                    <div className="social-icon-wrapper">
+                      <Camera size={28} className="social-icon-top" />
+                    </div>
                     <div className="social-text-bottom">
                       <span className="platform">Instagram</span>
                       <span className="handle">@iannc_oficial</span>
-                      <p className="social-card-meta">Story-uri, vibe si bucati din viata de zi cu zi.</p>
-                      <span className="social-card-action">Open profile <ExternalLink size={14} /></span>
+                      <p className="social-card-meta">Vibe, story-uri și crâmpeie din viața de zi cu zi.</p>
+                      <span className="social-card-action">Urmărește-mă <ExternalLink size={14} /></span>
                     </div>
                   </div>
                 </a>
 
+                {/* YouTube Card */}
                 <a href="https://youtube.com/@iannc" target="_blank" rel="noreferrer" className="social-bento-card youtube-card">
-                  <Video size={120} className="social-bg-icon" />
+                  <Video size={160} className="social-bg-icon" />
                   <div className="social-bento-content">
-                    <Video size={28} className="social-icon-top" />
+                    <div className="social-icon-wrapper">
+                      <Video size={28} className="social-icon-top" />
+                    </div>
                     <div className="social-text-bottom">
                       <span className="platform">YouTube</span>
                       <span className="handle">@iannc</span>
-                      <p className="social-card-meta">Video-uri, proiecte si continut pentru comunitate.</p>
-                      <span className="social-card-action">Open channel <ExternalLink size={14} /></span>
+                      <p className="social-card-meta">Conținut video, tutoriale și devlogs pentru comunitate.</p>
+                      <span className="social-card-action">Aboanează-te <ExternalLink size={14} /></span>
                     </div>
                   </div>
                 </a>
@@ -688,65 +720,66 @@ function Home() {
 
         {/* ULTRA PREMIUM FOOTER */}
         <footer className="ultra-footer">
+          <div className="footer-glow"></div>
           <div className="footer-container">
-            {/* Brand Section */}
-            <div className="footer-brand">
-              <h2 className="footer-logo">IANNC<span className="text-primary">.RO</span></h2>
-              <p className="footer-kicker">Portfolio hub</p>
-              <p className="footer-bio-main">Developer, community builder si creator de tool-uri pentru workflow rapid.</p>
-              <div className="footer-actions">
-                <a href="#proiecte" className="footer-primary-action">Vezi proiectele <ArrowRight size={15} /></a>
-                <a href="#socials" className="footer-secondary-action">Contact rapid</a>
+            {/* Main Links */}
+            <div className="footer-content">
+              <div className="footer-brand">
+                <p style={{ margin: 0, color: '#fff', fontSize: '1.8rem', fontWeight: 800, letterSpacing: '-0.03em' }}>
+                  Ready for liftoff?
+                </p>
+                <p style={{ color: '#94a3b8', fontSize: '1rem', marginTop: '0.5rem', marginBottom: '2rem', maxWidth: '300px' }}>
+                  Hai să construim împreună ecosistemul tău digital.
+                </p>
+                <button className="footer-cta-btn" onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}>
+                  Contact <ArrowRight size={18} />
+                </button>
               </div>
-              <p className="footer-bio">Dezvoltator Web & Community Manager. Construind ecosisteme digitale performante cu pasiune și cafea.</p>
-              <div className="footer-status">
-                <div className="status-dot"></div>
-                <span>Toate Sistemele Operaționale</span>
+
+              <div className="footer-links-group">
+                <div className="footer-column">
+                  <h4>Navigație</h4>
+                  <a href="#" className="footer-link" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Acasă</a>
+                  <a href="#proiecte" className="footer-link">Proiecte</a>
+                  <a href="#contact" className="footer-link" onClick={(e) => { e.preventDefault(); document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' }); }}>Contact</a>
+                </div>
+                <div className="footer-column">
+                  <h4>Ecosistem</h4>
+                  <Link to="/tools/update-maker" className="footer-link">Update Maker</Link>
+                  <Link to="/tools/todo-maker" className="footer-link">To-Do Maker</Link>
+                  <Link to="/downloader" className="footer-link text-danger">YouTube Downloader</Link>
+                  <Link to="/spotify" className="footer-link" style={{ color: '#1DB954' }}>Spotify Downloader</Link>
+                </div>
+                <div className="footer-column">
+                  <h4>Altele</h4>
+                  <Link to="/pomodoro" className="footer-link" style={{ color: '#c084fc' }}>Pomodoro Focus</Link>
+                  <Link to="/qr-studio" className="footer-link">QR Code Studio</Link>
+                  <Link to="/link-hub" className="footer-link">Link Hub Builder</Link>
+                  <a href="https://inclounge.top" target="_blank" rel="noreferrer" className="footer-link">IncLounge</a>
+                </div>
               </div>
             </div>
 
-            {/* Quick Links */}
-            <div className="footer-links-group">
-              <div className="footer-column">
-                <h4>Navigație</h4>
-                <a href="#" className="footer-link" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Acasă</a>
-                <a href="#proiecte" className="footer-link">Proiecte</a>
-                <a href="#socials" className="footer-link">Contact</a>
-              </div>
-
-              <div className="footer-column">
-                <h4>Ecosistem</h4>
-                <Link to="/tools/update-maker" className="footer-link">Update Maker</Link>
-                <Link to="/tools/todo-maker" className="footer-link">To-Do Maker</Link>
-                <Link to="/downloader" className="footer-link text-danger">YouTube Downloader</Link>
-                <Link to="/cutter" className="footer-link" style={{ color: '#a855f7' }}>MP3 Cutter</Link>
-                <Link to="/spotify" className="footer-link" style={{ color: '#1DB954' }}>Spotify Downloader</Link>
-                <Link to="/pomodoro" className="footer-link" style={{ color: '#c084fc' }}>Pomodoro Focus</Link>
-                <Link to="/link-hub" className="footer-link">Link Hub Builder</Link>
-                <Link to="/discord-embed" className="footer-link">Discord Embed Builder</Link>
-                <Link to="/qr-studio" className="footer-link">QR Code Studio</Link>
-                <a href="https://inclounge.top" target="_blank" rel="noreferrer" className="footer-link">IncLounge</a>
-              </div>
-
-              <div className="footer-column footer-column-highlight">
-                <h4>Live</h4>
-                <a href="https://github.com/iannC69" target="_blank" rel="noreferrer" className="footer-link">GitHub Profile</a>
-                <a href="https://steamcommunity.com/id/1iannc/" target="_blank" rel="noreferrer" className="footer-link">Steam Profile</a>
-                <a href="https://youtube.com/@iannc" target="_blank" rel="noreferrer" className="footer-link">YouTube Channel</a>
-              </div>
+            {/* Massive Brand Name */}
+            <div className="footer-massive-brand">
+              IANNC
             </div>
-          </div>
 
-          <div className="footer-bottom">
-            <p>&copy; {new Date().getFullYear()} IANNC.RO. Toate drepturile rezervate.</p>
-            <div className="footer-social-mini">
-              <a href="https://github.com/iannC69" target="_blank" rel="noreferrer" title="GitHub"><GitBranch size={20} /></a>
-              <a href="https://steamcommunity.com/id/1iannc/" target="_blank" rel="noreferrer" title="Steam"><Gamepad2 size={20} /></a>
-              <a href="https://instagram.com/iannc_oficial" target="_blank" rel="noreferrer" title="Instagram"><Camera size={20} /></a>
-              <a href="https://youtube.com/@iannc" target="_blank" rel="noreferrer" title="YouTube"><Video size={20} /></a>
+            {/* Bottom */}
+            <div className="footer-bottom">
+              <p>&copy; {new Date().getFullYear()} IANNC.RO. Toate drepturile rezervate.</p>
+              <div className="footer-social-mini">
+                <a href="https://github.com/iannC69" target="_blank" rel="noreferrer" title="GitHub"><GitBranch size={18} /></a>
+                <a href="https://steamcommunity.com/id/1iannc/" target="_blank" rel="noreferrer" title="Steam"><Gamepad2 size={18} /></a>
+                <a href="https://instagram.com/iannc_oficial" target="_blank" rel="noreferrer" title="Instagram"><Camera size={18} /></a>
+                <a href="https://youtube.com/@iannc" target="_blank" rel="noreferrer" title="YouTube"><Video size={18} /></a>
+              </div>
             </div>
           </div>
         </footer>
+
+        {/* CONTACT & REVIEWS SECTION */}
+        <ContactAndReviews />
 
       </div>
     </>
