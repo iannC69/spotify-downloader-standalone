@@ -34,5 +34,11 @@
     "name": "Minecraft",
     "playtimeHours": 15000,
     "imageUrl": "https://images.igdb.com/igdb/image/upload/t_1080p/co8fu7.jpg"
+  },
+  {
+    "id": 1905,
+    "name": "Fortnite",
+    "playtimeHours": 1500,
+    "imageUrl": "https://images.igdb.com/igdb/image/upload/t_1080p/coc8ds.jpg"
   }
 ]

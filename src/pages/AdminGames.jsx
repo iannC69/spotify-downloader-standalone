@@ -1,11 +1,28 @@
 import { useState } from 'react';
-import { Search, Plus, Trash2, ArrowLeft, Gamepad2, AlertCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { 
+  Search, Plus, Trash2, AlertCircle, Gamepad2,
+  LayoutDashboard, SlidersHorizontal, Settings, Users, 
+  LinkIcon, ShieldCheck, Lock, ExternalLink, Database,
+  Star, Clock, TrendingUp, Library
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
-import Navbar from '../components/Navbar';
+import { useUser } from '@clerk/clerk-react';
+import { Link as RouterLink } from 'react-router-dom';
 import myGamesData from '../data/myGames.json';
-import './Home.css';
+import './Admin.css';
+
+const adminTabs = [
+  { id: 'overview', label: 'Overview', icon: LayoutDashboard, to: '/admin' },
+  { id: 'site', label: 'Site control', icon: SlidersHorizontal, to: '/admin' },
+  { id: 'tools', label: 'Tools', icon: Settings, to: '/admin' },
+  { id: 'team', label: 'Team', icon: Users, to: '/admin' },
+  { id: 'socials', label: 'Socials', icon: LinkIcon, to: '/admin' },
+  { id: 'moderation', label: 'Moderation', icon: ShieldCheck, to: '/admin' },
+];
 
 function AdminGames() {
+  const { user } = useUser();
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -13,18 +30,17 @@ function AdminGames() {
   const [myGames, setMyGames] = useState(myGamesData);
   const [playtime, setPlaytime] = useState({});
 
+  const email = user?.primaryEmailAddress?.emailAddress || '';
+
   const searchIGDB = async (e) => {
     e.preventDefault();
     if (!query) return;
     setLoading(true);
     setError('');
-    
     try {
       const res = await fetch(`/api/igdb/search?q=${encodeURIComponent(query)}`);
       const data = await res.json();
-      
       if (!res.ok) throw new Error(data.error || 'Eroare la căutare. Ai pus cheile Twitch în .env?');
-      
       setSearchResults(data);
     } catch (err) {
       setError(err.message);
@@ -35,31 +51,27 @@ function AdminGames() {
 
   const addGame = async (game) => {
     try {
-      // Transformăm t_thumb de la IGDB în t_1080p pentru o rezoluție maximă
       let imageUrl = '';
       if (game.cover && game.cover.url) {
         imageUrl = game.cover.url.replace('t_thumb', 't_1080p').replace('//', 'https://');
       }
-
       const newGame = {
         id: game.id,
         name: game.name,
         playtimeHours: playtime[game.id] || 0,
         imageUrl: imageUrl || 'https://placehold.co/600x900/111214/D2FF00?text=No+Cover'
       };
-
       const res = await fetch('/api/games/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newGame)
       });
-      
       if (res.ok) {
         setMyGames(prev => {
           const filtered = prev.filter(g => g.id !== game.id);
-          return [newGame, ...filtered]; // adaugă la început
+          return [newGame, ...filtered];
         });
-        alert(`Jocul ${game.name} a fost adăugat cu succes în portofoliu!`);
+        alert(`${game.name} adăugat cu succes!`);
       } else {
         const err = await res.json();
         alert('Eroare: ' + err.error);
@@ -71,132 +83,223 @@ function AdminGames() {
   };
 
   const deleteGame = async (id) => {
-    if (!window.confirm('Ești sigur că vrei să ștergi acest joc din portofoliu?')) return;
+    if (!window.confirm('Ești sigur că vrei să ștergi acest joc?')) return;
     try {
       const res = await fetch('/api/games/delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id })
       });
-      
-      if (res.ok) {
-        setMyGames(prev => prev.filter(g => g.id !== id));
-      }
+      if (res.ok) setMyGames(prev => prev.filter(g => g.id !== id));
     } catch (e) {
       console.error(e);
     }
   };
 
+  const totalHours = myGames.reduce((sum, g) => sum + (g.playtimeHours || 0), 0);
+
   return (
-    <>
-      <Navbar />
-      <div className="home-container" style={{ paddingTop: '100px', minHeight: '100vh', paddingBottom: '100px' }}>
-        <div className="section-container" style={{ maxWidth: '1200px' }}>
-          
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
-            <Link to="/" className="btn btn-secondary" style={{ padding: '0.75rem' }}><ArrowLeft size={20}/></Link>
-            <h1 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Gamepad2 className="text-primary" size={36} /> Admin Panel: IGDB
-            </h1>
+    <div className="admin-container">
+      <div className="admin-bg">
+        <div className="admin-grid-lines" />
+      </div>
+
+      <div className="admin-shell">
+        <motion.header
+          className="admin-hero"
+          initial={{ opacity: 0, y: -18 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div>
+            <span className="admin-kicker"><Lock size={15} /> Game Library Manager</span>
+            <h1><Gamepad2 size={38} /> Game Library</h1>
+            <p>Caută în baza IGDB și gestionează portofoliul de jocuri afișat pe site.</p>
           </div>
 
-          <p style={{ color: 'rgba(255,255,255,0.7)', marginBottom: '3rem', maxWidth: '600px' }}>
-            Caută orice joc existent în baza de date mondială IGDB (deținută de Twitch) și adaugă-l manual în portofoliul tău public. Setează orele jucate înainte să apeși pe Plus.
-          </p>
-
-          {error && (
-            <div style={{ background: 'rgba(255,68,68,0.1)', borderLeft: '4px solid #ff4444', padding: '1rem', marginBottom: '2rem', borderRadius: '8px', display: 'flex', gap: '10px', alignItems: 'center' }}>
-              <AlertCircle className="text-danger" size={24} />
-              <span style={{ color: '#fff' }}>{error}</span>
+          <div className="admin-save-panel">
+            <div className="admin-user-pill">
+              <ShieldCheck size={17} />
+              <span>{email}</span>
             </div>
-          )}
+            <Link to="/admin" className="admin-save-btn" style={{ textDecoration: 'none', opacity: 0.85 }}>
+              ← Back to Command Center
+            </Link>
+          </div>
+        </motion.header>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3rem', alignItems: 'start' }}>
-            
-            {/* PANOUL STÂNG: Căutare IGDB */}
-            <div className="admin-panel" style={{ background: 'rgba(255,255,255,0.02)', padding: '2rem', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Baza de Date Globală</h2>
-              <form onSubmit={searchIGDB} style={{ display: 'flex', gap: '10px' }}>
-                <input 
-                  type="text" 
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Ex: The Witcher 3, GTA V..."
-                  style={{ flex: 1, padding: '14px 20px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.3)', color: 'white', fontSize: '16px' }}
-                />
-                <button type="submit" className="btn btn-primary" disabled={loading} style={{ padding: '0 24px', borderRadius: '12px' }}>
-                  {loading ? 'Se caută...' : <Search size={20} />}
-                </button>
-              </form>
+        <div className="admin-layout">
+          {/* SIDEBAR */}
+          <aside className="admin-sidebar">
+            {adminTabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <RouterLink
+                  key={tab.id}
+                  to={tab.to}
+                  className="admin-tab"
+                  style={{ textDecoration: 'none' }}
+                >
+                  <Icon size={18} />
+                  <span>{tab.label}</span>
+                </RouterLink>
+              );
+            })}
+            <RouterLink to="/admin/games" className="admin-tab active" style={{ textDecoration: 'none' }}>
+              <Gamepad2 size={18} />
+              <span>Game library</span>
+              <ExternalLink size={14} />
+            </RouterLink>
+          </aside>
 
-              <div style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {searchResults.map(game => (
-                  <div key={game.id} style={{ display: 'flex', gap: '1rem', alignItems: 'center', background: 'rgba(0,0,0,0.3)', padding: '12px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.03)' }}>
-                    {game.cover?.url ? (
-                      <img src={game.cover.url.replace('t_thumb', 't_cover_small').replace('//', 'https://')} alt="cover" style={{ width: '60px', height: '80px', objectFit: 'cover', borderRadius: '8px' }} />
-                    ) : (
-                      <div style={{ width: '60px', height: '80px', background: '#111', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span style={{ fontSize: '10px', color: '#555' }}>No Image</span>
+          {/* MAIN CONTENT */}
+          <main className="admin-main">
+            <motion.section
+              className="admin-section"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25 }}
+            >
+              {/* STATS ROW */}
+              <div className="admin-metrics" style={{ marginBottom: '2rem' }}>
+                <div className="metric-card">
+                  <Library size={22} />
+                  <strong>{myGames.length}</strong>
+                  <span>Jocuri publicate</span>
+                </div>
+                <div className="metric-card">
+                  <Clock size={22} />
+                  <strong>{totalHours}h</strong>
+                  <span>Total ore jucate</span>
+                </div>
+                <div className="metric-card">
+                  <Database size={22} />
+                  <strong>IGDB</strong>
+                  <span>Sursa date</span>
+                </div>
+                <div className="metric-card">
+                  <TrendingUp size={22} />
+                  <strong>{myGames.length > 0 ? Math.round(totalHours / myGames.length) : 0}h</strong>
+                  <span>Medie per joc</span>
+                </div>
+              </div>
+
+              {error && (
+                <div style={{ background: 'rgba(255,68,68,0.1)', borderLeft: '4px solid #ff4444', padding: '1rem', marginBottom: '2rem', borderRadius: '12px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <AlertCircle size={20} style={{ color: '#ff4444', flexShrink: 0 }} />
+                  <span style={{ color: '#fff', fontSize: '0.9rem' }}>{error}</span>
+                </div>
+              )}
+
+              <div className="admin-grid two">
+                {/* PANOUL STÂNG: Căutare IGDB */}
+                <div className="admin-card">
+                  <div className="card-title-row">
+                    <h3><Search size={20} /> Caută în IGDB</h3>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', background: 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: '20px' }}>Baza de date mondială</span>
+                  </div>
+
+                  <form onSubmit={searchIGDB} style={{ display: 'flex', gap: '10px', marginBottom: '1.5rem' }}>
+                    <input
+                      type="text"
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      placeholder="Ex: The Witcher 3, GTA V..."
+                      style={{ flex: 1, padding: '12px 16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(0,0,0,0.3)', color: 'white', fontSize: '15px', outline: 'none' }}
+                    />
+                    <button type="submit" className="admin-save-btn" disabled={loading} style={{ padding: '0 20px', whiteSpace: 'nowrap' }}>
+                      {loading ? 'Caută...' : <><Search size={16} /> Caută</>}
+                    </button>
+                  </form>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '500px', overflowY: 'auto' }}>
+                    {searchResults.length === 0 && !loading && (
+                      <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.3)', padding: '3rem 0', fontSize: '0.9rem' }}>
+                        {query ? 'Niciun rezultat găsit.' : 'Tastează un joc și apasă Caută.'}
                       </div>
                     )}
-                    <div style={{ flex: 1 }}>
-                      <h4 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: '600' }}>{game.name}</h4>
-                      <input 
-                        type="number" 
-                        placeholder="Ore jucate..." 
-                        value={playtime[game.id] || ''}
-                        onChange={(e) => setPlaytime({...playtime, [game.id]: parseInt(e.target.value) || 0})}
-                        style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: 'white', width: '120px', fontSize: '14px' }}
-                      />
-                    </div>
-                    <button onClick={() => addGame(game)} className="btn btn-secondary" style={{ padding: '12px', borderRadius: '12px' }} title="Adaugă în portofoliu">
-                      <Plus size={24} />
-                    </button>
+                    {searchResults.map(game => (
+                      <motion.div
+                        key={game.id}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        style={{ display: 'flex', gap: '12px', alignItems: 'center', background: 'rgba(0,0,0,0.3)', padding: '12px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.04)' }}
+                      >
+                        {game.cover?.url ? (
+                          <img src={game.cover.url.replace('t_thumb', 't_cover_small').replace('//', 'https://')} alt="cover" style={{ width: '50px', height: '66px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0 }} />
+                        ) : (
+                          <div style={{ width: '50px', height: '66px', background: '#111', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Gamepad2 size={18} style={{ color: '#555' }} />
+                          </div>
+                        )}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: '700', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{game.name}</h4>
+                          <input
+                            type="number"
+                            placeholder="Ore jucate"
+                            value={playtime[game.id] || ''}
+                            onChange={(e) => setPlaytime({ ...playtime, [game.id]: parseInt(e.target.value) || 0 })}
+                            style={{ padding: '6px 10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: 'white', width: '110px', fontSize: '13px', outline: 'none' }}
+                          />
+                        </div>
+                        <button
+                          onClick={() => addGame(game)}
+                          style={{ background: '#D2FF00', border: 'none', color: '#000', borderRadius: '10px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, fontWeight: '900', transition: 'all 0.2s' }}
+                          title="Adaugă"
+                        >
+                          <Plus size={20} />
+                        </button>
+                      </motion.div>
+                    ))}
                   </div>
-                ))}
-                
-                {searchResults.length === 0 && !loading && !error && query && (
-                  <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.4)', margin: '2rem 0' }}>Nu am găsit niciun joc cu numele ăsta.</p>
-                )}
-              </div>
-            </div>
+                </div>
 
-            {/* PANOUL DREPT: Librăria mea */}
-            <div className="admin-panel" style={{ background: 'rgba(255,255,255,0.02)', padding: '2rem', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                <h2 style={{ fontSize: '1.5rem', margin: 0 }}>Publicate pe Site</h2>
-                <span style={{ background: 'rgba(210, 255, 0, 0.1)', color: '#D2FF00', padding: '4px 12px', borderRadius: '20px', fontWeight: 'bold' }}>
-                  {myGames.length}
-                </span>
-              </div>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                {myGames.map(game => (
-                  <div key={game.id} style={{ position: 'relative', borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)', aspectRatio: '2/3', background: '#000' }}>
-                    <img src={game.imageUrl} alt={game.name} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.8, transition: '0.3s ease' }} />
-                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '16px 12px', background: 'linear-gradient(transparent, rgba(0,0,0,0.95) 80%)' }}>
-                      <h4 style={{ margin: '0 0 4px 0', fontSize: '14px', lineHeight: '1.2' }}>{game.name}</h4>
-                      <span style={{ fontSize: '12px', color: '#D2FF00', fontWeight: '600' }}>{game.playtimeHours} ore</span>
-                    </div>
-                    <button 
-                      onClick={() => deleteGame(game.id)}
-                      style={{ position: 'absolute', top: '10px', right: '10px', background: 'rgba(255,68,68,0.9)', border: 'none', color: 'white', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}
-                      title="Șterge"
-                    >
-                      <Trash2 size={18} />
-                    </button>
+                {/* PANOUL DREPT: Library */}
+                <div className="admin-card">
+                  <div className="card-title-row">
+                    <h3><Star size={20} /> Publicate pe site</h3>
+                    <span style={{ background: 'rgba(210, 255, 0, 0.1)', color: '#D2FF00', padding: '4px 12px', borderRadius: '20px', fontWeight: 'bold', fontSize: '0.85rem', border: '1px solid rgba(210,255,0,0.2)' }}>
+                      {myGames.length} jocuri
+                    </span>
                   </div>
-                ))}
-              </div>
-              {myGames.length === 0 && (
-                <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.4)', margin: '2rem 0' }}>Librăria este goală. Caută un joc în stânga și apasă Plus.</p>
-              )}
-            </div>
 
-          </div>
+                  {myGames.length === 0 ? (
+                    <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.3)', padding: '3rem 0', fontSize: '0.9rem' }}>
+                      Librăria este goală. Caută un joc în stânga.
+                    </div>
+                  ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '12px', maxHeight: '580px', overflowY: 'auto' }}>
+                      {myGames.map(game => (
+                        <motion.div
+                          key={game.id}
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          style={{ position: 'relative', borderRadius: '14px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', aspectRatio: '2/3', background: '#000', cursor: 'pointer' }}
+                          whileHover={{ scale: 1.03 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <img src={game.imageUrl} alt={game.name} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85 }} />
+                          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '12px 10px 10px', background: 'linear-gradient(transparent, rgba(0,0,0,0.95) 70%)' }}>
+                            <h4 style={{ margin: '0 0 3px 0', fontSize: '12px', lineHeight: '1.3', fontWeight: '700' }}>{game.name}</h4>
+                            <span style={{ fontSize: '11px', color: '#D2FF00', fontWeight: '700' }}>{game.playtimeHours}h</span>
+                          </div>
+                          <button
+                            onClick={() => deleteGame(game.id)}
+                            style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(255,68,68,0.9)', backdropFilter: 'blur(10px)', border: 'none', color: 'white', borderRadius: '50%', width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}
+                            title="Șterge"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.section>
+          </main>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 

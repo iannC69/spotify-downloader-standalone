@@ -78,6 +78,33 @@ body {
   z-index: 1;
 }
 
+/* Hide Clerk Branding Globally */
+.cl-watermark,
+[class*="cl-watermark"],
+.cl-userProfile-root a[href*="clerk.com"],
+.cl-userProfile-root a[href*="clerk.dev"],
+.cl-navbar > div:last-child {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Hide Development mode badge specifically */
+.cl-internal-1jvw023,
+.cl-internal-1dauvpw,
+.cl-internal-phgxis {
+  display: none !important;
+}
+
+/* Nuke the orange dev mode striped background */
+.cl-navbar, 
+.cl-navbar::after,
+.cl-navbar::before,
+[class*="cl-internal-"] {
+  background-image: none !important;
+}
+
 .app-container {
   display: flex;
   height: 100vh;

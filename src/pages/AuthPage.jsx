@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useSignIn, useSignUp, useUser } from '@clerk/clerk-react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { Layers, ArrowLeft, Mail, Lock, User, KeyRound, Loader2, Code, ShieldCheck, Zap } from 'lucide-react';
@@ -8,19 +8,19 @@ import './AuthPage.css';
 const showcaseFeatures = [
   {
     icon: <Code size={56} className="showcase-icon" />,
-    title: "Ecosistem Digital Premium",
-    description: "Construiește, gestionează și urmărește proiectele tale într-un ecosistem complet. Fii la curent cu ultimele noutăți."
+    title: 'Ecosistem Digital Premium',
+    description: 'Acces rapid la tool-uri, reviews si zona ta de comunitate intr-un spatiu curat si sigur.',
   },
   {
     icon: <ShieldCheck size={56} className="showcase-icon" />,
-    title: "Securitate la nivel bancar",
-    description: "Datele tale sunt protejate de standarde criptografice. Autentificare securizată prin OTP și sesiuni monitorizate constant."
+    title: 'Securitate reala',
+    description: 'Autentificare prin IANNC Auth, sesiuni protejate si review-uri moderate inainte sa apara public.',
   },
   {
     icon: <Zap size={56} className="showcase-icon" />,
-    title: "Experiență Fluidă",
-    description: "Interfețe optimizate pentru performanță extremă. Fiecare interacțiune este gândită să economisească timpul tău prețios."
-  }
+    title: 'Experienta fluida',
+    description: 'Login rapid, formulare clare si tranzitii fine pentru o experienta fara frecare.',
+  },
 ];
 
 export default function AuthPage() {
@@ -32,8 +32,6 @@ export default function AuthPage() {
 
   const [authMode, setAuthMode] = useState(location.pathname.includes('/sign-in') ? 'login' : 'register');
   const [currentSlide, setCurrentSlide] = useState(0);
-  
-  // Form State
   const [username, setUsername] = useState('');
   const [firstName, setFirstName] = useState('');
   const [emailAddress, setEmailAddress] = useState('');
@@ -42,11 +40,11 @@ export default function AuthPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Auto-slide showcase
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % showcaseFeatures.length);
     }, 5000);
+
     return () => clearInterval(timer);
   }, []);
 
@@ -57,99 +55,146 @@ export default function AuthPage() {
   }, [isSignedIn, navigate]);
 
   if (isSignedIn) {
-    return null;
+    return (
+      <div className="auth-page-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#0a0a0c' }}>
+        <Loader2 className="spinner" size={48} style={{ color: '#D2FF00', animation: 'spin 1s linear infinite' }} />
+      </div>
+    );
   }
 
-  const handleRegister = async (e) => {
-    e.preventDefault();
+  const handleRegister = async (event) => {
+    event.preventDefault();
     if (!isSignUpLoaded) return;
+
     setLoading(true);
     setError('');
+
     try {
       await signUp.create({ username, firstName, emailAddress, password });
-      await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+      await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
       setAuthMode('verify');
     } catch (err) {
       console.error(err);
-      setError(err.errors?.[0]?.longMessage || err.message || "A apărut o eroare la înregistrare.");
+      setError(err.errors?.[0]?.longMessage || err.message || 'A aparut o eroare la inregistrare.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleVerify = async (e) => {
-    e.preventDefault();
+  const handleVerify = async (event) => {
+    event.preventDefault();
     if (!isSignUpLoaded) return;
+
     setLoading(true);
     setError('');
+
     try {
       const completeSignUp = await signUp.attemptEmailAddressVerification({ code });
+
       if (completeSignUp.status === 'complete') {
         await setSignUpActive({ session: completeSignUp.createdSessionId });
         navigate('/');
       } else {
-        console.log("Incomplete signup:", completeSignUp);
-        setError(`Eroare Clerk (${completeSignUp.status}). Detalii: ${JSON.stringify({ missing: completeSignUp.missingFields, unverified: completeSignUp.unverifiedFields })}`);
+        setError(`Eroare de securitate (${completeSignUp.status}). Verifica datele si incearca din nou.`);
       }
     } catch (err) {
       console.error(err);
-      setError(err.errors?.[0]?.longMessage || err.message || "Codul este invalid.");
+      setError(err.errors?.[0]?.longMessage || err.message || 'Codul este invalid.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  const handleVerifyLogin = async (event) => {
+    event.preventDefault();
     if (!isSignInLoaded) return;
+
     setLoading(true);
     setError('');
+
+    try {
+      let completeSignIn;
+      if (signIn.status === 'needs_second_factor' || signIn.status === 'needs_client_trust') {
+        completeSignIn = await signIn.attemptSecondFactor({ strategy: 'email_code', code });
+      } else if (signIn.status === 'needs_first_factor') {
+        completeSignIn = await signIn.attemptFirstFactor({ strategy: 'email_code', code });
+      }
+
+      if (completeSignIn && completeSignIn.status === 'complete') {
+        await setSignInActive({ session: completeSignIn.createdSessionId });
+        navigate('/');
+      } else {
+        setError(`Eroare de verificare (${completeSignIn?.status}). Verifica codul si incearca din nou.`);
+      }
+    } catch (err) {
+      console.error(err);
+      setError(err.errors?.[0]?.longMessage || err.message || 'Codul este invalid.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogin = async (event) => {
+    event.preventDefault();
+    if (!isSignInLoaded) return;
+
+    setLoading(true);
+    setError('');
+
     try {
       const signInAttempt = await signIn.create({ identifier: emailAddress, password });
+
       if (signInAttempt.status === 'complete') {
         await setSignInActive({ session: signInAttempt.createdSessionId });
         navigate('/');
+      } else if (signInAttempt.status === 'needs_first_factor') {
+        await signInAttempt.prepareFirstFactor({ strategy: 'email_code' });
+        setAuthMode('verify-login');
+      } else if (signInAttempt.status === 'needs_client_trust' || signInAttempt.status === 'needs_second_factor') {
+        await signInAttempt.prepareSecondFactor({ strategy: 'email_code' });
+        setAuthMode('verify-login');
+      } else {
+        setError(`Eroare de autentificare (${signInAttempt.status}).`);
       }
     } catch (err) {
       console.error(err);
-      setError(err.errors?.[0]?.longMessage || err.message || "Email sau parolă incorectă.");
+      setError(err.errors?.[0]?.longMessage || err.message || 'Email sau parola incorecta.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Form rendering block based on authMode
   const renderForm = () => {
     if (authMode === 'login') {
       return (
-        <motion.form 
+        <motion.form
           key="login"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: 20 }}
           transition={{ duration: 0.3 }}
-          onSubmit={handleLogin} 
+          onSubmit={handleLogin}
           className="ca-form"
         >
           <div className="ca-input-group">
             <label>E-mail</label>
             <div className="ca-input-wrapper">
               <Mail size={18} className="ca-icon" />
-              <input type="email" placeholder="nume@exemplu.ro" value={emailAddress} onChange={(e) => setEmailAddress(e.target.value)} required />
+              <input type="email" placeholder="nume@exemplu.ro" value={emailAddress} onChange={(event) => setEmailAddress(event.target.value)} required />
             </div>
           </div>
           <div className="ca-input-group">
-            <label>Parolă</label>
+            <label>Parola</label>
             <div className="ca-input-wrapper">
               <Lock size={18} className="ca-icon" />
-              <input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <input type="password" placeholder="••••••••" value={password} onChange={(event) => setPassword(event.target.value)} required />
             </div>
             <div className="forgot-password">
               <button type="button">Ai uitat parola?</button>
             </div>
           </div>
           <button type="submit" className="ca-submit-btn" disabled={loading}>
-            {loading ? <Loader2 className="spinner" size={20} /> : 'Intră în cont'}
+            {loading ? <Loader2 className="spinner" size={20} /> : 'Intra in cont'}
           </button>
         </motion.form>
       );
@@ -157,45 +202,45 @@ export default function AuthPage() {
 
     if (authMode === 'register') {
       return (
-        <motion.form 
+        <motion.form
           key="register"
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.3 }}
-          onSubmit={handleRegister} 
+          onSubmit={handleRegister}
           className="ca-form"
         >
           <div className="ca-input-group">
-            <label>Nume utilizator (Username)</label>
+            <label>Username</label>
             <div className="ca-input-wrapper">
               <User size={18} className="ca-icon" />
-              <input type="text" placeholder="ion_popescu" value={username} onChange={(e) => setUsername(e.target.value)} required />
+              <input type="text" placeholder="iannc_user" value={username} onChange={(event) => setUsername(event.target.value)} required />
             </div>
           </div>
           <div className="ca-input-group">
             <label>Nume complet</label>
             <div className="ca-input-wrapper">
               <User size={18} className="ca-icon" />
-              <input type="text" placeholder="Ion Popescu" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+              <input type="text" placeholder="Numele tau" value={firstName} onChange={(event) => setFirstName(event.target.value)} required />
             </div>
           </div>
           <div className="ca-input-group">
             <label>E-mail</label>
             <div className="ca-input-wrapper">
               <Mail size={18} className="ca-icon" />
-              <input type="email" placeholder="nume@exemplu.ro" value={emailAddress} onChange={(e) => setEmailAddress(e.target.value)} required />
+              <input type="email" placeholder="nume@exemplu.ro" value={emailAddress} onChange={(event) => setEmailAddress(event.target.value)} required />
             </div>
           </div>
           <div className="ca-input-group">
-            <label>Parolă</label>
+            <label>Parola</label>
             <div className="ca-input-wrapper">
               <Lock size={18} className="ca-icon" />
-              <input type="password" placeholder="Minim 8 caractere" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <input type="password" placeholder="Minim 8 caractere" value={password} onChange={(event) => setPassword(event.target.value)} required />
             </div>
           </div>
           <button type="submit" className="ca-submit-btn" disabled={loading}>
-            {loading ? <Loader2 className="spinner" size={20} /> : 'Creează contul'}
+            {loading ? <Loader2 className="spinner" size={20} /> : 'Creeaza contul'}
           </button>
         </motion.form>
       );
@@ -203,50 +248,101 @@ export default function AuthPage() {
 
     if (authMode === 'verify') {
       return (
-        <motion.form 
+        <motion.form
           key="verify"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 1.05 }}
           transition={{ duration: 0.4 }}
-          onSubmit={handleVerify} 
+          onSubmit={handleVerify}
           className="ca-form"
         >
           <div className="ca-input-group">
-            <label>Cod de verificare (6 cifre)</label>
+            <label>Cod de verificare</label>
             <div className="ca-input-wrapper">
               <KeyRound size={18} className="ca-icon" />
-              <input type="text" placeholder="123456" maxLength={6} value={code} onChange={(e) => setCode(e.target.value)} required style={{ letterSpacing: '0.5em', fontWeight: '800' }} />
+              <input type="text" placeholder="123456" maxLength={6} value={code} onChange={(event) => setCode(event.target.value)} required style={{ letterSpacing: '0.5em', fontWeight: '800' }} />
             </div>
           </div>
           <button type="submit" className="ca-submit-btn" disabled={loading}>
-            {loading ? <Loader2 className="spinner" size={20} /> : 'Verifică contul'}
+            {loading ? <Loader2 className="spinner" size={20} /> : 'Verifica contul'}
           </button>
         </motion.form>
       );
     }
+
+    if (authMode === 'verify-login') {
+      return (
+        <motion.form
+          key="verify-login"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 1.05 }}
+          transition={{ duration: 0.4 }}
+          onSubmit={handleVerifyLogin}
+          className="ca-form"
+        >
+          <div className="ca-input-group">
+            <label>Cod de securitate (Email)</label>
+            <div className="ca-input-wrapper">
+              <KeyRound size={18} className="ca-icon" />
+              <input type="text" placeholder="123456" maxLength={6} value={code} onChange={(event) => setCode(event.target.value)} required style={{ letterSpacing: '0.5em', fontWeight: '800' }} />
+            </div>
+          </div>
+          <button type="submit" className="ca-submit-btn" disabled={loading}>
+            {loading ? <Loader2 className="spinner" size={20} /> : 'Confirma Autentificarea'}
+          </button>
+        </motion.form>
+      );
+    }
+
+    return null;
   };
 
   return (
     <div className="auth-page-container">
-      <div className="auth-bg-glow glow-1"></div>
-      <div className="auth-bg-glow glow-2"></div>
+      <div className="auth-starfield" />
+      <div className="auth-backdrop-grid" />
+      <div className="auth-lime-path path-one" />
+      <div className="auth-lime-path path-two" />
+      <div className="auth-bg-glow glow-1" />
+      <div className="auth-bg-glow glow-2" />
+      <div className="auth-floating-chip chip-one">Firebase synced</div>
+      <div className="auth-floating-chip chip-two">IANNC secured</div>
 
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
         className="auth-split-card"
       >
-        {/* LEFT SIDE: FORM */}
         <div className="auth-form-side">
           <Link to="/" className="auth-back-btn">
-            <ArrowLeft size={16} /> Înapoi la site
+            <ArrowLeft size={16} /> Inapoi la site
           </Link>
-          
+
           <div className="auth-form-content">
+            {authMode !== 'verify' && authMode !== 'verify-login' && (
+              <div className="auth-mode-switch" aria-label="Auth mode">
+                <button
+                  type="button"
+                  className={authMode === 'login' ? 'active' : ''}
+                  onClick={() => { setAuthMode('login'); setError(''); }}
+                >
+                  Login
+                </button>
+                <button
+                  type="button"
+                  className={authMode === 'register' ? 'active' : ''}
+                  onClick={() => { setAuthMode('register'); setError(''); }}
+                >
+                  Register
+                </button>
+              </div>
+            )}
+
             <AnimatePresence mode="wait">
-              <motion.div 
+              <motion.div
                 key={authMode}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -254,22 +350,25 @@ export default function AuthPage() {
                 transition={{ duration: 0.3 }}
                 className="ca-header"
               >
+                <span className="ca-kicker">Member access</span>
                 <h2>
                   {authMode === 'login' && 'Bine ai revenit'}
-                  {authMode === 'register' && 'Creează un cont'}
-                  {authMode === 'verify' && 'Verifică e-mail-ul'}
+                  {authMode === 'register' && 'Creeaza un cont'}
+                  {authMode === 'verify' && 'Verifica e-mail-ul'}
+                  {authMode === 'verify-login' && 'Securitate Cont'}
                 </h2>
                 <p>
-                  {authMode === 'login' && 'Intră în cont pentru a lăsa review-uri.'}
-                  {authMode === 'register' && 'Alătură-te comunității noastre digitale.'}
+                  {authMode === 'login' && 'Intra in cont pentru a lasa review-uri si feedback.'}
+                  {authMode === 'register' && 'Alatura-te comunitatii si pastreaza-ti activitatea sincronizata.'}
                   {authMode === 'verify' && `Am trimis un cod pe ${emailAddress}.`}
+                  {authMode === 'verify-login' && `Sistemul de securitate a detectat o activitate neobisnuita. Am trimis un cod de verificare pe ${emailAddress}.`}
                 </p>
               </motion.div>
             </AnimatePresence>
 
             <AnimatePresence>
               {error && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, height: 0, marginBottom: 0 }}
                   animate={{ opacity: 1, height: 'auto', marginBottom: '1.5rem' }}
                   exit={{ opacity: 0, height: 0, marginBottom: 0 }}
@@ -280,29 +379,30 @@ export default function AuthPage() {
               )}
             </AnimatePresence>
 
-            <div id="clerk-captcha"></div>
+            <div id="clerk-captcha" />
 
             <AnimatePresence mode="wait">
               {renderForm()}
             </AnimatePresence>
 
-            {authMode !== 'verify' && (
+            {authMode !== 'verify' && authMode !== 'verify-login' && (
               <div className="ca-footer">
                 {authMode === 'login' ? (
-                  <span>Nu ai cont? <button type="button" className="text-primary" onClick={() => { setAuthMode('register'); setError(''); }}>Înregistrează-te</button></span>
+                  <span>Nu ai cont? <button type="button" className="text-primary" onClick={() => { setAuthMode('register'); setError(''); }}>Inregistreaza-te</button></span>
                 ) : (
-                  <span>Ai deja cont? <button type="button" className="text-primary" onClick={() => { setAuthMode('login'); setError(''); }}>Loghează-te</button></span>
+                  <span>Ai deja cont? <button type="button" className="text-primary" onClick={() => { setAuthMode('login'); setError(''); }}>Logheaza-te</button></span>
                 )}
               </div>
             )}
           </div>
         </div>
 
-        {/* RIGHT SIDE: SHOWCASE */}
         <div className="auth-showcase-side">
           <div className="showcase-content">
-            
-            <motion.div 
+            <div className="showcase-orbit orbit-one" />
+            <div className="showcase-orbit orbit-two" />
+
+            <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
@@ -311,27 +411,35 @@ export default function AuthPage() {
               <Layers size={32} className="text-primary" />
               <span>IANNC<span className="text-primary">.RO</span></span>
             </motion.div>
-            
+
+            <div className="showcase-live-card">
+              <span className="live-dot" />
+              <div>
+                <strong>Secure workspace</strong>
+                <small>Reviews, community si tools sincronizate</small>
+              </div>
+            </div>
+
             <div className="showcase-illustration">
-               <div className="abstract-shape shape-1"></div>
-               <div className="abstract-shape shape-2"></div>
-               <AnimatePresence mode="wait">
-                 <motion.div 
-                   key={currentSlide}
-                   initial={{ opacity: 0, scale: 0.5, rotate: -30 }}
-                   animate={{ opacity: 1, scale: 1, rotate: -10 }}
-                   exit={{ opacity: 0, scale: 0.5, rotate: 10 }}
-                   transition={{ duration: 0.5, ease: "backOut" }}
-                   className="showcase-icon-wrapper"
-                 >
-                   {showcaseFeatures[currentSlide].icon}
-                 </motion.div>
-               </AnimatePresence>
+              <div className="abstract-shape shape-1" />
+              <div className="abstract-shape shape-2" />
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentSlide}
+                  initial={{ opacity: 0, scale: 0.5, rotate: -30 }}
+                  animate={{ opacity: 1, scale: 1, rotate: -8 }}
+                  exit={{ opacity: 0, scale: 0.5, rotate: 10 }}
+                  transition={{ duration: 0.5, ease: 'backOut' }}
+                  className="showcase-icon-wrapper"
+                >
+                  {showcaseFeatures[currentSlide].icon}
+                </motion.div>
+              </AnimatePresence>
             </div>
 
             <div className="showcase-text-container">
               <AnimatePresence mode="wait">
-                <motion.div 
+                <motion.div
                   key={currentSlide}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -344,16 +452,28 @@ export default function AuthPage() {
                 </motion.div>
               </AnimatePresence>
             </div>
-            
+
             <div className="showcase-dots">
               {showcaseFeatures.map((_, index) => (
-                <span 
-                  key={index} 
+                <span
+                  key={index}
                   className={`dot ${index === currentSlide ? 'active' : ''}`}
                   onClick={() => setCurrentSlide(index)}
                   style={{ cursor: 'pointer' }}
-                ></span>
+                />
               ))}
+            </div>
+
+            <div className="showcase-security-strip">
+              <span><ShieldCheck size={15} /> IANNC Auth</span>
+              <span><Zap size={15} /> Fast access</span>
+              <span><Code size={15} /> IANNC Tools</span>
+            </div>
+
+            <div className="showcase-mini-terminal" aria-label="Auth status preview">
+              <div className="terminal-dots"><i /><i /><i /></div>
+              <code>auth.session: verified</code>
+              <code>reviews.queue: protected</code>
             </div>
           </div>
         </div>

@@ -184,6 +184,29 @@
   gap: 1.5rem;
 }
 
+.global-announcement {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  max-width: 680px;
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(var(--primary-rgb), 0.24);
+  border-radius: 16px;
+  background: rgba(10, 12, 16, 0.76);
+  color: #dce7f5;
+  font-size: 0.92rem;
+  font-weight: 800;
+  line-height: 1.45;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(18px);
+}
+
+.global-announcement svg {
+  flex: 0 0 auto;
+  color: var(--primary);
+}
+
 .btn {
   display: inline-flex;
   align-items: center;

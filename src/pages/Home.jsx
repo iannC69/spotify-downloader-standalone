@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import {
@@ -6,22 +6,30 @@ import {
   ArrowRight, BadgeCheck, Server,
   Cpu, ChevronDown, Layers, Mail, Code, Bot, Globe, ExternalLink, LayoutList,
   MonitorPlay, MemoryStick, CircuitBoard, Mouse, Keyboard, Headphones, Monitor, Scissors, Brain,
-  Link2, MessageSquare, QrCode
+  Link2, MessageSquare, QrCode, Sparkles
 } from 'lucide-react';
 import Tilt from 'react-parallax-tilt';
+import { doc, getDoc } from 'firebase/firestore';
 import Navbar from '../components/Navbar';
 import LiveStatus from '../components/LiveStatus';
 import SpotifyProfile from '../components/SpotifyProfile';
 import ContactAndReviews from '../components/ContactAndReviews';
 import myGames from '../data/myGames.json';
+import { db } from '../firebase';
 import './Home.css';
 
 
 function Home() {
   const { scrollYProgress } = useScroll();
   const y = useTransform(scrollYProgress, [0, 1], ['0%', '50%']);
+  const [siteConfig, setSiteConfig] = useState(null);
   // Reference for intersection/animation
   const gearRef = useRef(null);
+  const publicTools = siteConfig?.tools?.filter((tool) => tool.public) || [];
+  const liveTools = publicTools.filter((tool) => tool.status === 'online');
+  const ownerName = siteConfig?.brand?.owner || 'IANNC';
+  const heroSubtitle = siteConfig?.brand?.heroSubtitle || 'Creator de prezentari si Community Manager. Transform ideile in prezentari de impact, design premium si experiente vizuale captivante.';
+  const announcement = siteConfig?.site?.announcementEnabled ? siteConfig?.site?.announcement : '';
 
   const sectionVariants = {
     hidden: { opacity: 0, y: 50 },
@@ -36,6 +44,27 @@ function Home() {
     hidden: { opacity: 0, y: 30 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } }
   };
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadSiteConfig = async () => {
+      try {
+        const snapshot = await getDoc(doc(db, 'siteData', 'general'));
+        if (mounted && snapshot.exists()) {
+          setSiteConfig(snapshot.data());
+        }
+      } catch (error) {
+        console.warn('Could not load public site config:', error);
+      }
+    };
+
+    loadSiteConfig();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <>
@@ -64,16 +93,22 @@ function Home() {
                 <LiveStatus />
               </motion.div>
               <motion.h1 className="hero-title-left" variants={itemVariants}>
-                Salut, sunt <span className="text-gradient">IANNC</span> <BadgeCheck size={42} className="verified-badge" />
+                Salut, sunt <span className="text-gradient">{ownerName}</span> <BadgeCheck size={42} className="verified-badge" />
               </motion.h1>
               <motion.p className="hero-subtitle-left" variants={itemVariants}>
-                Creator de prezentări și Community Manager. Transform ideile în prezentări de impact, design premium și experiențe vizuale captivante.
+                {heroSubtitle}
               </motion.p>
 
               <motion.div className="hero-action-buttons" variants={itemVariants}>
                 <a href="#proiecte" className="btn btn-primary">Vezi Proiectele <ArrowRight size={18} /></a>
                 <a href="#contact" className="btn btn-secondary">Contact <Mail size={18} /></a>
               </motion.div>
+              {announcement && (
+                <motion.div className="global-announcement" variants={itemVariants}>
+                  <Sparkles size={18} />
+                  <span>{announcement}</span>
+                </motion.div>
+              )}
             </motion.div>
 
             {/* Right: Glass Bento Hero Card */}
@@ -149,16 +184,16 @@ function Home() {
 
               <div className="projects-overview" aria-label="Rezumat proiecte">
                 <div>
-                  <strong>09</strong>
+                  <strong>{liveTools.length || '09'}</strong>
                   <span>Live</span>
                 </div>
                 <div>
-                  <strong>09</strong>
+                  <strong>{publicTools.length || '09'}</strong>
                   <span>Tools</span>
                 </div>
                 <div>
-                  <strong>01</strong>
-                  <span>Website</span>
+                  <strong>{siteConfig?.site?.version || 'v2'}</strong>
+                  <span>{siteConfig?.site?.status || 'Online'}</span>
                 </div>
               </div>
             </motion.div>
@@ -459,6 +494,9 @@ function Home() {
             </div>
           </div>
         </section>
+
+        {/* CONTACT & REVIEWS SECTION */}
+        <ContactAndReviews />
 
 
 
@@ -777,9 +815,6 @@ function Home() {
             </div>
           </div>
         </footer>
-
-        {/* CONTACT & REVIEWS SECTION */}
-        <ContactAndReviews />
 
       </div>
     </>
