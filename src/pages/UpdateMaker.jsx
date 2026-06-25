@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Settings, Plus, Trash2, Copy, Check, ChevronDown, ChevronUp, Image as ImageIcon, Link as LinkIcon, User as UserIcon, X, Upload, Download, Sparkles, FolderOpen, Save, FileCode2, Minimize, Maximize, ZoomIn, ZoomOut, Hash, Undo2, Redo2, RotateCcw, ImageDown, MessageSquare, ScrollText, Languages, ArrowLeft, Bold, Italic, Underline, Strikethrough, Quote, Code, List, Heading, AtSign, Clock, Smile } from 'lucide-react';
+import { Settings, Plus, Trash2, Copy, Check, ChevronDown, ChevronUp, Image as ImageIcon, Link as LinkIcon, User as UserIcon, X, Upload, Download, Sparkles, FolderOpen, Save, FileCode2, Minimize, Maximize, ZoomIn, ZoomOut, Hash, Undo2, Redo2, RotateCcw, ImageDown, MessageSquare, ScrollText, Languages, ArrowLeft, Bold, Italic, Underline, Strikethrough, Quote, Code, List, Heading, AtSign, Clock, Smile, Eye } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import EmojiPicker, { Theme } from 'emoji-picker-react';
 import hljs from 'highlight.js';
@@ -595,7 +595,7 @@ function UpdateMaker() {
   const addCategory = () => {
     setState(s => ({
       ...s,
-      categories: [...s.categories, { id: Date.now().toString(), title: '🆕 Categorie Nouă', description: '', descriptionEn: '' }]
+      categories: [...s.categories, { id: Date.now().toString(), title: 'Categorie Noua', description: '', descriptionEn: '' }]
     }));
   };
 
@@ -845,6 +845,109 @@ function UpdateMaker() {
   const charCount = (isNotepadMode ? notepadValue : finalDiscordText).length;
   const isOverLimit = charCount > 4000;
 
+  const countTextPoints = useCallback((text = '') => text.split('\n').reduce((total, rawLine) => {
+    const line = rawLine.trim().replace(/^>\s*/, '').trim();
+
+    if (
+      !line ||
+      line.startsWith('```') ||
+      /^#{1,6}\s/.test(line) ||
+      /^[-_<>\s]{8,}$/.test(line)
+    ) {
+      return total;
+    }
+
+    return total + 1;
+  }, 0), []);
+
+  const countStructuredPoints = useCallback((lang = 'RO') => {
+    const categoryPoints = state.categories.reduce((total, cat) => {
+      const description = lang === 'EN' ? cat.descriptionEn : cat.description;
+      return total + countTextPoints(description);
+    }, 0);
+
+    const bugFixPoints = state.showBugFixes
+      ? countTextPoints(lang === 'EN' && state.bugFixesTextEn ? state.bugFixesTextEn : state.bugFixesText)
+      : 0;
+
+    const introPoints = state.showIntro ? countTextPoints(state.introText) : 0;
+
+    return categoryPoints + bugFixPoints + introPoints;
+  }, [
+    countTextPoints,
+    state.categories,
+    state.showBugFixes,
+    state.bugFixesText,
+    state.bugFixesTextEn,
+    state.showIntro,
+    state.introText,
+  ]);
+
+  const updateStats = useMemo(() => {
+    const source = isNotepadMode ? notepadValue : finalDiscordText;
+    const words = source.split(/\s+/).filter(Boolean).length;
+    const bullets = countStructuredPoints('RO') + (state.isDualLanguage ? countStructuredPoints('EN') : 0);
+
+    return {
+      categories: state.categories.length,
+      bullets,
+      readMinutes: Math.max(1, Math.ceil(words / 180)),
+      hasImage: Boolean(state.imageUrl),
+    };
+  }, [
+    isNotepadMode,
+    notepadValue,
+    finalDiscordText,
+    countStructuredPoints,
+    state.categories.length,
+    state.isDualLanguage,
+    state.imageUrl,
+  ]);
+
+  const normalizeSpacing = (text = '') => text
+    .replace(/[ \t]+$/gm, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+
+  const cleanSpacing = () => {
+    setState(s => ({
+      ...s,
+      headerText: normalizeSpacing(s.headerText),
+      introText: normalizeSpacing(s.introText),
+      bugFixesText: normalizeSpacing(s.bugFixesText),
+      bugFixesTextEn: normalizeSpacing(s.bugFixesTextEn),
+      footerText: normalizeSpacing(s.footerText),
+      drafts: normalizeSpacing(s.drafts),
+      categories: s.categories.map(cat => ({
+        ...cat,
+        title: normalizeSpacing(cat.title),
+        description: normalizeSpacing(cat.description),
+        descriptionEn: normalizeSpacing(cat.descriptionEn),
+      })),
+    }));
+  };
+
+  const copyUpdateSummary = () => {
+    const summary = [
+      `Update ${state.version || ''}`.trim(),
+      `${updateStats.categories} categorii`,
+      `${updateStats.bullets} puncte`,
+      `${charCount}/4000 caractere`,
+    ].join(' | ');
+
+    navigator.clipboard.writeText(summary);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  const collapseAllCategories = () => {
+    setCollapsedCategories(state.categories.map(cat => cat.id));
+  };
+
+  const expandAllCategories = () => {
+    setCollapsedCategories([]);
+  };
+
   const handleCopy = () => {
     navigator.clipboard.writeText(isNotepadMode ? notepadValue : finalDiscordText);
     setCopied(true);
@@ -1070,7 +1173,7 @@ function UpdateMaker() {
 
 
   return (
-    <div className={`app-container ${isZenMode ? 'zen-mode' : ''}`} style={{ '--embed-color': state.embedColor }} data-lenis-prevent="true">
+    <div className={`app-container update-maker-page ${isZenMode ? 'zen-mode' : ''}`} style={{ '--embed-color': state.embedColor }} data-lenis-prevent="true">
       {isZenMode && (
         <button className="zen-toggle-btn" onClick={() => setIsZenMode(false)}>
           <Minimize size={18} /> Ieși din Focus Mode (Esc)
@@ -1096,6 +1199,44 @@ function UpdateMaker() {
           <button className="btn btn-outline" onClick={() => loadPreset('website')} style={{ flex: 1, padding: '1rem', display: 'flex', justifyContent: 'center', gap: '0.5rem', borderColor: 'var(--primary)', color: 'var(--primary)' }}>
             <Sparkles size={20} /> Șablon Nou (Website & Mngmt)
           </button>
+        </div>
+
+        <div className="update-maker-insights">
+          <div className="um-stat-card">
+            <MessageSquare size={18} />
+            <span>Categorii</span>
+            <strong>{updateStats.categories}</strong>
+          </div>
+          <div className="um-stat-card">
+            <List size={18} />
+            <span>Puncte</span>
+            <strong>{updateStats.bullets}</strong>
+          </div>
+          <div className="um-stat-card">
+            <Clock size={18} />
+            <span>Citire</span>
+            <strong>{updateStats.readMinutes} min</strong>
+          </div>
+          <div className="um-stat-card">
+            <ImageIcon size={18} />
+            <span>Imagine</span>
+            <strong>{updateStats.hasImage ? 'Da' : 'Nu'}</strong>
+          </div>
+
+          <div className="um-quick-actions">
+            <button className="um-action-btn primary" type="button" onClick={cleanSpacing}>
+              <Sparkles size={16} /> Curata spatii
+            </button>
+            <button className="um-action-btn" type="button" onClick={copyUpdateSummary}>
+              <Copy size={16} /> Copy sumar
+            </button>
+            <button className="um-action-btn" type="button" onClick={collapseAllCategories}>
+              <Minimize size={16} /> Strange toate
+            </button>
+            <button className="um-action-btn" type="button" onClick={expandAllCategories}>
+              <Maximize size={16} /> Extinde toate
+            </button>
+          </div>
         </div>
 
         <div className="general-settings">
@@ -1219,7 +1360,7 @@ function UpdateMaker() {
                     isInput={true}
                     value={cat.title} 
                     onChange={(val) => updateCategory(cat.id, 'title', val)}
-                    placeholder="Ex: 🌐 Improvement La Website"
+                    placeholder="Ex: Improvement la Website"
                   />
                 </div>
                 <button className="btn btn-outline btn-icon" onClick={() => toggleCategoryCollapse(cat.id)} title="Ascunde/Arată Categoria" style={{ alignSelf: 'flex-end', marginBottom: '0.2rem', padding: '0.5rem', height: '40px' }}>
@@ -1376,25 +1517,25 @@ function UpdateMaker() {
             <span className={`char-counter ${isOverLimit ? 'over-limit' : ''}`} style={{ fontWeight: 'bold', color: isOverLimit ? 'var(--danger)' : 'var(--text-muted)' }}>
               {charCount} / 4000 caractere
             </span>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <div className="preview-mode-switcher" style={{ display: 'flex', gap: '0.5rem' }}>
               <button 
                 className={`btn btn-sm ${!isNotepadMode ? 'btn-primary' : 'btn-outline'}`}
                 onClick={() => setIsNotepadMode(false)}
               >
-                👁️ Vizual
+                <Eye size={16} /> Vizual
               </button>
               <button 
                 className={`btn btn-sm ${isNotepadMode ? 'btn-primary' : 'btn-outline'}`}
                 onClick={() => setIsNotepadMode(true)}
               >
-                📝 Notepad
+                <ScrollText size={16} /> Notepad
               </button>
             </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
-          <button className="btn btn-primary" onClick={handleCopy} style={{ flex: 1 }}>
+        <div className="preview-toolbar-actions" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+          <button className="btn btn-primary" onClick={handleCopy}>
             {copied ? <Check size={18} /> : <Copy size={18} />}
             {copied ? 'Copiat!' : 'Copiaza Textul'}
           </button>
@@ -1499,7 +1640,7 @@ function UpdateMaker() {
         <div className="dock-item dock-orange" data-tooltip="Încarcă Șablon" style={{ position: 'relative' }}>
           <FolderOpen size={22} />
           <select className="hidden-select" onChange={loadTemplate} value="" style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }}>
-            <option value="" disabled>📁 Încarcă...</option>
+            <option value="" disabled>Incarca...</option>
             {Object.keys(savedTemplates).map(name => (
               <option key={name} value={name}>{name}</option>
             ))}

@@ -4,7 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node scripts/dev-all.cjs",
+    "vite": "vite",
+    "overlay": "npm --prefix asets/tiktok_overlay run dev",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"

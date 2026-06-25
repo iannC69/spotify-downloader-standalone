@@ -294,6 +294,33 @@ const spotifyPlugin = () => ({
         res.end(JSON.stringify({ error: err.message }));
       }
     });
+
+    server.middlewares.use('/api/spotify/search', async (req, res, next) => {
+      const urlObj = new URL(req.url, `http://${req.headers.host}`);
+      if (urlObj.pathname !== '/') return next();
+
+      const query = urlObj.searchParams.get('q');
+      if (!query) {
+        res.statusCode = 400;
+        return res.end(JSON.stringify({ error: 'No query provided' }));
+      }
+
+      try {
+        const token = await getSpotifyAccessToken();
+        const response = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=artist`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await response.json();
+
+        if (!response.ok) throw new Error(data.error?.message || 'Search failed');
+
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify(data.artists?.items || []));
+      } catch (err) {
+        res.statusCode = 500;
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
   }
 });
 

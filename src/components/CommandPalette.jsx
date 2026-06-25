@@ -5,6 +5,7 @@ import {
   Brain,
   ClipboardList,
   Download,
+  Flame,
   Home,
   Link2,
   MessageSquare,
@@ -93,6 +94,9 @@ export default function CommandPalette() {
             </Command.Item>
             <Command.Item onSelect={() => handleSelect(() => navigate('/qr-studio'))}>
               <QrCode size={16} /> QR Code Studio
+            </Command.Item>
+            <Command.Item onSelect={() => handleSelect(() => navigate('/wildfire-overlay'))}>
+              <Flame size={16} /> Wildfire Overlay
             </Command.Item>
             <Command.Item onSelect={() => handleSelect(() => { navigate('/'); setTimeout(() => window.location.href = '#proiecte', 100); })}>
               <Monitor size={16} /> Projects

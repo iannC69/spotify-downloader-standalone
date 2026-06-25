@@ -17,12 +17,15 @@ import Pomodoro from './pages/Pomodoro';
 import LinkHubBuilder from './pages/LinkHubBuilder';
 import DiscordEmbedBuilder from './pages/DiscordEmbedBuilder';
 import QRCodeStudio from './pages/QRCodeStudio';
+import WildfireOverlay from './pages/WildfireOverlay';
+import ConnectServer from './pages/ConnectServer';
 import { PomodoroSessionProvider } from './context/PomodoroSessionContext';
 import PomodoroMiniWidget from './components/PomodoroMiniWidget';
 import SiteConfigProvider from './context/SiteConfigContext';
 import { useSiteConfig } from './context/useSiteConfig';
 import MaintenancePage from './components/MaintenancePage';
 import AnnouncementBanner from './components/AnnouncementBanner';
+import AnalyticsTracker from './components/AnalyticsTracker';
 import { useUser } from '@clerk/clerk-react';
 
 import { useLocation } from 'react-router-dom';
@@ -61,6 +64,7 @@ function AppInner() {
 
   return (
     <>
+      <AnalyticsTracker />
       <AnnouncementBanner text={announcement} />
       <MatrixRain active={isHackerMode} />
       <CommandPalette />
@@ -80,6 +84,8 @@ function AppInner() {
             <Route path="/link-hub" element={<LinkHubBuilder />} />
             <Route path="/discord-embed" element={<DiscordEmbedBuilder />} />
             <Route path="/qr-studio" element={<QRCodeStudio />} />
+            <Route path="/wildfire-overlay" element={<WildfireOverlay />} />
+            <Route path="/connect-cs2" element={<ConnectServer />} />
           </Routes>
         </main>
       </div>
@@ -105,6 +111,7 @@ function App() {
       wheelMultiplier: 1,
       smoothTouch: false,
       touchMultiplier: 2,
+      prevent: (node) => node.closest?.('[data-lenis-prevent]'),
     });
 
     function raf(time) {

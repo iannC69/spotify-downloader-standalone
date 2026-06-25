@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useContext } from 'react';
 import {
   ChevronDown,
   ChevronUp,
@@ -10,6 +10,7 @@ import {
   UserCheck,
   Users,
 } from 'lucide-react';
+import { SiteConfigContext } from '../context/siteConfigInstance';
 import './SpotifyProfile.css';
 
 const fallbackProfileImage = 'https://i.scdn.co/image/ab6761610000e5eb12a2ef08d00dd7451a6dbed6';
@@ -42,6 +43,8 @@ export default function SpotifyProfile() {
     followedArtists: false,
   });
 
+  const { siteConfig } = useContext(SiteConfigContext);
+
   useEffect(() => {
     fetch('/api/spotify/data')
       .then(res => res.json())
@@ -66,11 +69,27 @@ export default function SpotifyProfile() {
   const profile = spotifyData?.profile;
   const profileName = profile?.display_name || 'IANNC';
   const profilePossessive = `${profileName}'s`;
-  const topArtists = spotifyData?.topArtists || [];
-  const playlists = spotifyData?.playlists || [];
-  const followedArtists = spotifyData?.followedArtists || [];
+  const topArtists = useMemo(() => spotifyData?.topArtists || [], [spotifyData?.topArtists]);
+  const playlists = useMemo(() => spotifyData?.playlists || [], [spotifyData?.playlists]);
+  const followedArtists = useMemo(() => spotifyData?.followedArtists || [], [spotifyData?.followedArtists]);
   const followedWarning = spotifyData?.spotifyWarnings?.followedArtists;
-  const featuredArtist = topArtists[0];
+
+  const favoriteArtistName = siteConfig?.spotify?.favoriteArtist;
+  const favoriteArtistData = siteConfig?.spotify?.favoriteArtistData;
+
+  const featuredArtist = useMemo(() => {
+    if (favoriteArtistData && favoriteArtistData.name === favoriteArtistName) {
+      return favoriteArtistData;
+    }
+    if (favoriteArtistName && favoriteArtistName.trim() !== '') {
+      const searchName = favoriteArtistName.toLowerCase().trim();
+      const found = topArtists.find(a => a.name.toLowerCase() === searchName) || 
+                    followedArtists.find(a => a.name.toLowerCase() === searchName);
+      if (found) return found;
+    }
+    return topArtists[0];
+  }, [favoriteArtistName, favoriteArtistData, topArtists, followedArtists]);
+
   const featuredPlaylist = playlists[0];
   const visibleTopArtists = expanded.topArtists ? topArtists : topArtists.slice(0, 6);
   const visiblePlaylists = expanded.playlists ? playlists : playlists.slice(0, 4);
@@ -173,7 +192,7 @@ export default function SpotifyProfile() {
           >
             <img src={getImage(featuredArtist.images)} alt={featuredArtist.name} />
             <div>
-              <span>Top artist</span>
+              <span>Favorite artist</span>
               <strong>{featuredArtist.name}</strong>
               <small>Open on Spotify</small>
             </div>

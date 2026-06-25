@@ -5,6 +5,7 @@ import {
   Brain,
   ChevronLeft,
   ChevronRight,
+  Flame,
   Headphones,
   Home,
   Layers,
@@ -104,6 +105,10 @@ function Navbar() {
             <Link to="/qr-studio" className={`tool-dock-link ${isActive('/qr-studio') ? 'active' : ''}`}>
               <QrCode size={16} />
               <span>QR</span>
+            </Link>
+            <Link to="/wildfire-overlay" className={`tool-dock-link ${isActive('/wildfire-overlay') ? 'active' : ''}`}>
+              <Flame size={16} />
+              <span>Overlay</span>
             </Link>
             </div>
             {showArrows && (

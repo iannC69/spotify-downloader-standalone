@@ -1,0 +1,13 @@
+{
+  "default": {
+    "title": "CS2.WILDFIRE.RO",
+    "type": "csgo",
+    "host": "5.135.142.4",
+    "port": 27015,
+    "accent": "#ff8800",
+    "shadow": "#000000",
+    "pollMs": 5000,
+    "position": "top-left",
+    "scale": "1"
+  }
+}

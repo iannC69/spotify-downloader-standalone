@@ -5,8 +5,8 @@ import {
   Gamepad2, GitBranch, Camera, Video,
   ArrowRight, BadgeCheck, Server,
   Cpu, ChevronDown, Layers, Mail, Code, Bot, Globe, ExternalLink, LayoutList,
-  MonitorPlay, MemoryStick, CircuitBoard, Mouse, Keyboard, Headphones, Monitor, Scissors, Brain,
-  Link2, MessageSquare, QrCode, Sparkles
+  MonitorPlay, MemoryStick, CircuitBoard, Mouse, Keyboard, Headphones, Monitor, Scissors, Brain, Armchair,
+  Link2, MessageSquare, QrCode, Sparkles, Flame
 } from 'lucide-react';
 import Tilt from 'react-parallax-tilt';
 import { doc, getDoc } from 'firebase/firestore';
@@ -491,6 +491,36 @@ function Home() {
                   </Link>
                 </motion.div>
               </Tilt>
+
+              {/* Project: Wildfire Overlay */}
+              <Tilt className="tilt-wrapper" tiltMaxAngleX={4} tiltMaxAngleY={4} glareEnable={true} glareMaxOpacity={0.1} scale={1.02} transitionSpeed={1500}>
+                <motion.div className="story-card project-card compact-project-card incoming-project" variants={itemVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+                  <Link to="/wildfire-overlay" className="todo-project-card-link" aria-label="Deschide Wildfire Overlay">
+                    <div className="project-card-top">
+                      <span className="project-tag wildfire">STREAM TOOL</span>
+                      <span className="project-status-pill">Live</span>
+                    </div>
+                    <div className="project-header">
+                      <div className="project-icon-box wildfire">
+                        <Flame size={24} />
+                      </div>
+                      <div>
+                        <h4>Wildfire Overlay</h4>
+                        <span>CS2 stream HUD</span>
+                      </div>
+                    </div>
+                    <p>Overlay pentru TikTok/OBS cu server status CS2, player count, map si link configurabil pentru Browser Source.</p>
+                    <div className="project-feature-row">
+                      <span>OBS URL</span>
+                      <span>GameDig</span>
+                      <span>Live HUD</span>
+                    </div>
+                    <span className="project-action-link wildfire">
+                      Deschide <ArrowRight size={16} />
+                    </span>
+                  </Link>
+                </motion.div>
+              </Tilt>
             </div>
           </div>
         </section>
@@ -506,6 +536,156 @@ function Home() {
             <motion.h2 className="section-heading" variants={itemVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
               <Server size={36} className="heading-icon-svg text-primary" /> Arsenal & System Specs
             </motion.h2>
+
+            <motion.div className="hardware-command-deck" variants={itemVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+              <Tilt className="hardware-visual-card" tiltMaxAngleX={5} tiltMaxAngleY={7} glareEnable={false} scale={1.01} transitionSpeed={1800}>
+                <div className="hardware-photo-backdrop" aria-hidden="true">
+                  <img src="/assets/setup_bg.png" alt="" />
+                </div>
+                <div className="hardware-scene" aria-hidden="true">
+                  <div className="setup-turntable">
+                    <div className="monitor-rig">
+                      <div className="monitor-screen primary-screen">
+                        <div className="screen-topbar"></div>
+                        <div className="screen-graph"></div>
+                      </div>
+                      <div className="monitor-screen side-screen">
+                        <div className="screen-topbar"></div>
+                        <div className="screen-lines"></div>
+                      </div>
+                    </div>
+                    <div className="pc-tower-model">
+                      <div className="tower-slot"></div>
+                      <div className="tower-window">
+                        <Cpu size={30} />
+                      </div>
+                      <div className="tower-vents"></div>
+                    </div>
+                    <div className="desk-plane">
+                      <div className="keyboard-model"></div>
+                      <div className="mouse-model"></div>
+                      <div className="controller-model">
+                        <Gamepad2 size={32} />
+                      </div>
+                      <div className="headset-model">
+                        <Headphones size={34} />
+                      </div>
+                    </div>
+                    <div className="chair-model">
+                      <Armchair size={42} />
+                    </div>
+                  </div>
+
+                  <div className="floating-hw-chip chip-gpu">
+                    <MonitorPlay size={16} />
+                    RX 6750 XT
+                  </div>
+                  <div className="floating-hw-chip chip-cpu">
+                    <Cpu size={16} />
+                    Ryzen 5
+                  </div>
+                </div>
+
+                <div className="hardware-visual-copy">
+                  <h3>Gaming, code si community work intr-un singur setup.</h3>
+                  <p>Dual displays, periferice rapide si un build AMD facut pentru workflow, gaming si prezentari vizuale.</p>
+                </div>
+              </Tilt>
+
+              <div className="hardware-info-stack">
+                <div className="hardware-core-grid">
+                  <div className="hardware-spec-tile highlight">
+                    <MonitorPlay size={22} />
+                    <span>Graphics</span>
+                    <strong>Radeon RX 6750 XT</strong>
+                    <small>12GB GDDR6 VRAM / AMD RDNA 2</small>
+                  </div>
+                  <div className="hardware-spec-tile">
+                    <Cpu size={22} />
+                    <span>Processor</span>
+                    <strong>AMD Ryzen 5 7600X</strong>
+                    <small>6-Core, 12-Thread / 5.03GHz</small>
+                  </div>
+                  <div className="hardware-spec-tile">
+                    <MemoryStick size={22} />
+                    <span>Memory</span>
+                    <strong>32GB DDR5</strong>
+                    <small>4800 MHz</small>
+                  </div>
+                  <div className="hardware-spec-tile">
+                    <CircuitBoard size={22} />
+                    <span>Motherboard</span>
+                    <strong>MSI PRO B650-S</strong>
+                    <small>WIFI AM5</small>
+                  </div>
+                </div>
+
+                <div className="peripheral-showcase">
+                  <div className="peripheral-showcase-header">
+                    <Gamepad2 size={18} />
+                    <span>Peripherals</span>
+                  </div>
+                  <div className="peripheral-device-grid">
+                    <div className="device-pill">
+                      <Mouse size={18} />
+                      <div>
+                        <span>Mouse</span>
+                        <strong>Razer Basilisk V3</strong>
+                      </div>
+                    </div>
+                    <div className="device-pill">
+                      <Keyboard size={18} />
+                      <div>
+                        <span>Keyboard</span>
+                        <strong>Custom Qwerty</strong>
+                      </div>
+                    </div>
+                    <div className="device-pill">
+                      <Headphones size={18} />
+                      <div>
+                        <span>Audio</span>
+                        <strong>Logitech PRO X</strong>
+                      </div>
+                    </div>
+                    <div className="device-pill">
+                      <Monitor size={18} />
+                      <div>
+                        <span>Displays</span>
+                        <strong>LG FHD + QG240Y S3</strong>
+                      </div>
+                    </div>
+                    <div className="device-pill">
+                      <Gamepad2 size={18} />
+                      <div>
+                        <span>Controller</span>
+                        <strong>Wireless Controller</strong>
+                      </div>
+                    </div>
+                    <div className="device-pill">
+                      <Armchair size={18} />
+                      <div>
+                        <span>Chair</span>
+                        <strong>Ergonomic Gaming Chair</strong>
+                      </div>
+                    </div>
+                    <div className="device-pill">
+                      <Camera size={18} />
+                      <div>
+                        <span>Photo Slots</span>
+                        <strong>Setup / Chair / Controller</strong>
+                      </div>
+                    </div>
+                    <div className="device-pill">
+                      <Layers size={18} />
+                      <div>
+                        <span>Desk Layer</span>
+                        <strong>Extended mat + cable zone</strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
 
             <motion.div className="hardware-bento" variants={itemVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
               {/* GPU: Biggest Card */}
@@ -793,6 +973,7 @@ function Home() {
                   <Link to="/pomodoro" className="footer-link" style={{ color: '#c084fc' }}>Pomodoro Focus</Link>
                   <Link to="/qr-studio" className="footer-link">QR Code Studio</Link>
                   <Link to="/link-hub" className="footer-link">Link Hub Builder</Link>
+                  <Link to="/wildfire-overlay" className="footer-link" style={{ color: '#ff8800' }}>Wildfire Overlay</Link>
                   <a href="https://inclounge.top" target="_blank" rel="noreferrer" className="footer-link">IncLounge</a>
                 </div>
               </div>
