@@ -4,9 +4,10 @@ const children = new Set();
 let shuttingDown = false;
 
 function run(name, command, args, options = {}) {
-    const child = spawn(command, args, {
+    const isWin = process.platform === 'win32';
+    const child = spawn(isWin ? `${command} ${args.join(' ')}` : command, isWin ? [] : args, {
         cwd: options.cwd || process.cwd(),
-        shell: process.platform === 'win32',
+        shell: isWin,
         stdio: ['ignore', 'pipe', 'pipe']
     });
 

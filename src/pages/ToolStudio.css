@@ -308,7 +308,9 @@
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  background: var(--color-primary);
+  background-color: var(--color-primary);
+  background-size: cover;
+  background-position: center;
 }
 
 .discord-author {

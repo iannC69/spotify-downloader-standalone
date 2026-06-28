@@ -707,13 +707,48 @@ function UpdateMaker() {
   };
 
   const handleSteamFetch = async () => {
-    if (tempMediaUrl.includes('steamcommunity.com/id/') || tempMediaUrl.includes('steamcommunity.com/profiles/')) {
+    const input = tempMediaUrl.trim();
+    
+    // Check if it's a Discord ID (17-19 digits)
+    if (/^\d{17,19}$/.test(input)) {
       try {
-        let proxyUrl = `https://corsproxy.io/?${encodeURIComponent(tempMediaUrl)}`;
+        const discordId = input;
+        
+        // Try Lanyard first
+        const lanyardRes = await fetch(`https://api.lanyard.rest/v1/users/${discordId}`).catch(() => null);
+        if (lanyardRes && lanyardRes.ok) {
+          const json = await lanyardRes.json();
+          if (json.data && json.data.discord_user && json.data.discord_user.avatar) {
+            setTempMediaUrl(`https://cdn.discordapp.com/avatars/${discordId}/${json.data.discord_user.avatar}.png?size=512`);
+            return;
+          }
+        }
+        
+        alert('Nu am putut găsi avatarul Discord (ID invalid sau utilizatorul nu e în Lanyard). Alternativ, poți copia link-ul imaginii direct din Discord și să-l lipești aici.');
+      } catch (err) {
+        console.error('Failed to fetch Discord avatar', err);
+        alert('Eroare la preluarea avatarului Discord.');
+      }
+      return;
+    }
+
+    let isValid = false;
+    try {
+      const parsed = new URL(input);
+      if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
+        isValid = true;
+      }
+    } catch (e) {
+      isValid = false;
+    }
+
+    if (isValid) {
+      try {
+        let proxyUrl = `https://corsproxy.io/?${encodeURIComponent(input)}`;
         let response = await fetch(proxyUrl).catch(() => null);
         
         if (!response || !response.ok) {
-          proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(tempMediaUrl)}`;
+          proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(input)}`;
           response = await fetch(proxyUrl);
         }
         
@@ -739,7 +774,7 @@ function UpdateMaker() {
         alert('Eroare la preluarea profilului. Posibil ca un AdBlocker (ex: uBlock Origin, Brave) să blocheze conexiunea.');
       }
     } else {
-      alert('Te rugăm să introduci un link valid de profil Steam (ex: https://steamcommunity.com/id/...)');
+      alert('Te rugăm să introduci un Discord ID valid SAU un link web valid (ex: Steam, Pinterest, etc.)');
     }
   };
 
@@ -1695,7 +1730,7 @@ function UpdateMaker() {
                 </button>
                 {mediaManagerTarget === 'avatar' && (
                   <button className={`modal-tab ${mediaTab === 'steam' ? 'active' : ''}`} onClick={() => setMediaTab('steam')}>
-                    <UserIcon size={16} /> Profil Steam
+                    <UserIcon size={16} /> Extrage din Profil
                   </button>
                 )}
               </div>
@@ -1718,9 +1753,9 @@ function UpdateMaker() {
 
               {mediaTab === 'steam' && (
                 <div className="input-group">
-                  <label>Link Profil Steam</label>
+                  <label>ID Discord sau URL Profil (Steam, Pinterest, etc.)</label>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <input type="text" value={tempMediaUrl} onChange={(e) => setTempMediaUrl(e.target.value)} placeholder="Ex: https://steamcommunity.com/id/1iannc/" style={{ flex: 1 }} />
+                    <input type="text" value={tempMediaUrl} onChange={(e) => setTempMediaUrl(e.target.value)} placeholder="Ex: 235088799074484224 sau https://steamcommunity.com/id/..." style={{ flex: 1 }} />
                     <button className="btn btn-primary" onClick={handleSteamFetch}>Preia Avatar</button>
                   </div>
                 </div>
@@ -1730,7 +1765,7 @@ function UpdateMaker() {
                 <div className="modal-preview">
                   <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Previzualizare Imagine:</span>
                   {mediaManagerTarget === 'avatar' ? (
-                    <img src={tempMediaUrl} alt="Preview" className="modal-preview-avatar" />
+                    <img src={tempMediaUrl} alt="Preview" className="modal-preview-avatar" style={{ objectFit: 'cover', objectPosition: 'center' }} />
                   ) : (
                     <img src={tempMediaUrl} alt="Preview" className="modal-preview-img" />
                   )}
