@@ -4,7 +4,7 @@ import {
   ArrowLeft, Package, Search, Plus, Trash2, Copy,
   Download, RefreshCw, Box, Crosshair, ChevronLeft, ChevronRight,
   Check, Settings, ListChecks, FileJson, X, Save,
-  Image, Upload, FolderOpen
+  Image, Upload, FolderOpen, Globe, Folder
 } from 'lucide-react';
 import JSZip from 'jszip';
 import Navbar from '../components/Navbar';
@@ -19,6 +19,7 @@ const RARITY_MAP = {
   rarity_mythical_weapon: { label: 'Restricted', value: 'restricted', color: '#8847ff', num: 4 },
   rarity_legendary_weapon: { label: 'Classified', value: 'classified', color: '#d32ce6', num: 5 },
   rarity_ancient_weapon: { label: 'Covert', value: 'covert', color: '#eb4b4b', num: 6 },
+  rarity_contraband_weapon: { label: 'Contraband', value: 'contraband', color: '#e4ae39', num: 7 },
   rarity_contraband: { label: 'Contraband', value: 'contraband', color: '#e4ae39', num: 7 },
   rarity_ancient: { label: 'Covert', value: 'covert', color: '#eb4b4b', num: 6 },
   rarity_legendary: { label: 'Classified', value: 'classified', color: '#d32ce6', num: 5 },
@@ -145,7 +146,7 @@ export default function CaseCreator() {
       );
     }
     if (rarityFilter !== 'all') {
-      result = result.filter((s) => s.rarity?.id === rarityFilter);
+      result = result.filter((s) => RARITY_MAP[s.rarity?.id]?.value === rarityFilter);
     }
     if (weaponFilter !== 'all') {
       result = result.filter((s) => s.weapon?.name === weaponFilter);
@@ -605,7 +606,7 @@ export default function CaseCreator() {
                 <span>Folder: <strong>{folderName}</strong></span>
               </div>
               <div className="cc-folder-tree">
-                <div className="cc-tree-line">📁 {folderName}/</div>
+                <div className="cc-tree-line"><Folder size={12} style={{ display: 'inline', verticalAlign: '-2px', marginRight: '4px' }} /> {folderName}/</div>
                 <div className="cc-tree-line sub">├── server.json</div>
                 <div className="cc-tree-line sub">├── site.php</div>
                 {activeCase.caseImage && <div className="cc-tree-line sub">├── case_{activeCase.id}.{activeCase.caseImage.name?.split('.').pop() || 'png'}</div>}
@@ -641,13 +642,13 @@ export default function CaseCreator() {
                       className={`cc-preview-tab ${previewTab === 'server' ? 'active' : ''}`}
                       onClick={() => setPreviewTab('server')}
                     >
-                      📦 Server JSON
+                      <Box size={14} /> Server JSON
                     </button>
                     <button
                       className={`cc-preview-tab ${previewTab === 'site' ? 'active' : ''}`}
                       onClick={() => setPreviewTab('site')}
                     >
-                      🌐 Site PHP
+                      <Globe size={14} /> Site PHP
                     </button>
                   </div>
                   <div className="cc-json-output">
@@ -682,8 +683,8 @@ export default function CaseCreator() {
                   {Object.entries(RARITY_MAP)
                     .filter(([id], i, arr) => arr.findIndex(([, r2]) => r2.label === RARITY_MAP[id].label) === i)
                     .map(([id, r]) => (
-                      <option key={id} value={id}>{r.label}</option>
-                    ))}
+                    <option key={r.value} value={r.value}>{r.label}</option>
+                  ))}
                 </select>
                 <select
                   className="cc-filter-select"
@@ -836,8 +837,8 @@ export default function CaseCreator() {
                             <option key={w.value} value={w.value}>{w.label}</option>
                           ))}
                         </select>
-                        <div className="cc-case-item-weight">
-                          <label>W</label>
+                        <div className="cc-case-item-weight" title="Chance / Weight">
+                          <label>Chance</label>
                           <input
                             type="number"
                             min="0.01"
