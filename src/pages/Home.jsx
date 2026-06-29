@@ -6,7 +6,7 @@ import {
   ArrowRight, BadgeCheck, Server,
   Cpu, ChevronDown, Layers, Mail, Code, Bot, Globe, ExternalLink, LayoutList,
   MonitorPlay, MemoryStick, CircuitBoard, Mouse, Keyboard, Headphones, Monitor, Scissors, Brain, Armchair,
-  Link2, MessageSquare, QrCode, Sparkles, Flame
+  Link2, MessageSquare, QrCode, Sparkles, Flame, Package
 } from 'lucide-react';
 import Tilt from 'react-parallax-tilt';
 import { doc, getDoc } from 'firebase/firestore';
@@ -516,6 +516,36 @@ function Home() {
                       <span>Live HUD</span>
                     </div>
                     <span className="project-action-link wildfire">
+                      Deschide <ArrowRight size={16} />
+                    </span>
+                  </Link>
+                </motion.div>
+              </Tilt>
+
+              {/* Project: Case Creator */}
+              <Tilt className="tilt-wrapper" tiltMaxAngleX={4} tiltMaxAngleY={4} glareEnable={true} glareMaxOpacity={0.1} scale={1.02} transitionSpeed={1500}>
+                <motion.div className="story-card project-card compact-project-card incoming-project" variants={itemVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+                  <Link to="/case-creator" className="todo-project-card-link" aria-label="Deschide Case Creator">
+                    <div className="project-card-top">
+                      <span className="project-tag" style={{ color: '#fbbf24', background: 'rgba(251, 191, 36, 0.18)' }}>CS2 TOOL</span>
+                      <span className="project-status-pill">Live</span>
+                    </div>
+                    <div className="project-header">
+                      <div className="project-icon-box" style={{ color: '#111', background: '#fbbf24', boxShadow: '0 10px 25px rgba(251, 191, 36, 0.2)' }}>
+                        <Package size={24} />
+                      </div>
+                      <div>
+                        <h4>Case Creator</h4>
+                        <span>CS2 case builder</span>
+                      </div>
+                    </div>
+                    <p>Construieste case-uri CS2 cu skinuri din API, configureaza rarity si weight, si exporta JSON + PHP gata de server.</p>
+                    <div className="project-feature-row">
+                      <span>Skin API</span>
+                      <span>ZIP Export</span>
+                      <span>Multi-Case</span>
+                    </div>
+                    <span className="project-action-link" style={{ color: '#fbbf24' }}>
                       Deschide <ArrowRight size={16} />
                     </span>
                   </Link>

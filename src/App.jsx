@@ -19,6 +19,7 @@ import DiscordEmbedBuilder from './pages/DiscordEmbedBuilder';
 import QRCodeStudio from './pages/QRCodeStudio';
 import WildfireOverlay from './pages/WildfireOverlay';
 import ConnectServer from './pages/ConnectServer';
+import CaseCreator from './pages/CaseCreator';
 import { PomodoroSessionProvider } from './context/PomodoroSessionContext';
 import PomodoroMiniWidget from './components/PomodoroMiniWidget';
 import SiteConfigProvider from './context/SiteConfigContext';
@@ -86,6 +87,7 @@ function AppInner() {
             <Route path="/qr-studio" element={<QRCodeStudio />} />
             <Route path="/wildfire-overlay" element={<WildfireOverlay />} />
             <Route path="/connect-cs2" element={<ConnectServer />} />
+            <Route path="/case-creator" element={<CaseCreator />} />
           </Routes>
         </main>
       </div>
