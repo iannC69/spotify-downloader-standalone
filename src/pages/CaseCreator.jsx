@@ -4,7 +4,7 @@ import {
   ArrowLeft, Package, Search, Plus, Trash2, Copy,
   Download, RefreshCw, Box, Crosshair, ChevronLeft, ChevronRight,
   Check, Settings, ListChecks, FileJson, X, Save,
-  Image, Upload, FolderOpen, Globe, Folder
+  Eye, Upload, FolderOpen, Globe, Folder
 } from 'lucide-react';
 import JSZip from 'jszip';
 import Navbar from '../components/Navbar';
@@ -39,12 +39,11 @@ const RARITY_OPTIONS = [
 ];
 
 const WEAR_TIERS = [
-  { value: 0, label: 'Default (0)' },
-  { value: 1, label: 'Factory New' },
-  { value: 2, label: 'Minimal Wear' },
-  { value: 3, label: 'Field-Tested' },
-  { value: 4, label: 'Well-Worn' },
-  { value: 5, label: 'Battle-Scarred' },
+  { value: 0, label: 'Factory New', color: '#00cc66' },
+  { value: 1, label: 'Minimal Wear', color: '#99ff33' },
+  { value: 2, label: 'Field-Tested', color: '#ffcc00' },
+  { value: 3, label: 'Well-Worn', color: '#ff9933' },
+  { value: 4, label: 'Battle-Scarred', color: '#ff3300' },
 ];
 
 const ITEMS_PER_PAGE = 60;
@@ -85,6 +84,7 @@ export default function CaseCreator() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [weaponFilter, setWeaponFilter] = useState('all');
   const [page, setPage] = useState(1);
+  const [appMode, setAppMode] = useState('editor'); // 'editor' | 'simulator'
 
   const [cases, setCases] = useState(() => {
     try {
@@ -106,10 +106,17 @@ export default function CaseCreator() {
   const toastTimer = useRef(null);
   const [showPreview, setShowPreview] = useState(false);
   const [previewTab, setPreviewTab] = useState('server'); // 'server' | 'site'
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importText, setImportText] = useState('');
+
+  const [skinToAdd, setSkinToAdd] = useState(null);
+  const [addWear, setAddWear] = useState(0);
+  const [addWeight, setAddWeight] = useState(10);
 
   const caseImgRef = useRef(null);
   const featImgRef = useRef(null);
   const importFileRef = useRef(null);
+  const singleImportRef = useRef(null);
 
   const activeCase = cases[activeCaseIdx] || cases[0];
 
@@ -118,6 +125,124 @@ export default function CaseCreator() {
     () => `CASE_${activeCase.name.toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/_+$/, '')}`,
     [activeCase.name]
   );
+
+  /* ── Full Profile Import / Export ── */
+  const processImportData = useCallback((parsed) => {
+    try {
+      let importedCases = [];
+      if (Array.isArray(parsed)) {
+        importedCases = parsed;
+      } else if (parsed.cases && Array.isArray(parsed.cases)) {
+        importedCases = parsed.cases;
+      } else if (parsed.id && Array.isArray(parsed.items)) {
+        importedCases = [parsed];
+      }
+
+      if (importedCases.length === 0) {
+        showToast('Invalid format or no cases found');
+        return;
+      }
+
+      const newCases = importedCases.map((c) => {
+        const itemsArray = Array.isArray(c.items) ? c.items : [];
+        const reconstructedItems = itemsArray.map((item, idx) => {
+          const skinInfo = allSkins.find(s => 
+            s.weapon?.weapon_id == item.weaponIndex && 
+            s.paint_index == item.paintkitIndex
+          );
+          const rColor = skinInfo ? (RARITY_MAP[skinInfo.rarity?.id]?.color || skinInfo.rarity?.color) : '#94a3b8';
+
+          return {
+            ...item,
+            _uid: `${item.weaponIndex}_${item.paintkitIndex}_${idx}_${Date.now()}`,
+            _name: skinInfo ? skinInfo.name : `Unknown ${item.weaponIndex}:${item.paintkitIndex}`,
+            _image: skinInfo ? skinInfo.image : '',
+            _rarityColor: rColor,
+          };
+        });
+
+        const cData = { ...c };
+        delete cData.items;
+
+        return {
+          ...cData,
+          id: c.id || `case_${Date.now()}`,
+          name: c.name || 'Imported Case',
+          price: c.price || 100,
+          rarityColor: c.color || c.rarityColor || '#ccff00',
+          enabled: c.enabled !== false,
+          items: reconstructedItems
+        };
+      });
+
+      if (window.confirm(`Importing will replace your current ${cases.length} cases. Proceed?`)) {
+        setCases(newCases);
+        setActiveCaseIdx(0);
+        showToast(`Imported ${newCases.length} cases!`);
+        setShowImportModal(false);
+        setImportText('');
+      }
+    } catch (err) {
+      showToast('Failed to process JSON profile');
+    }
+  }, [allSkins, cases.length]);
+
+  const importProfile = useCallback((e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const parsed = JSON.parse(ev.target.result);
+        processImportData(parsed);
+      } catch (err) {
+        showToast('Failed to parse JSON file');
+      }
+      if (importFileRef.current) importFileRef.current.value = '';
+    };
+    reader.readAsText(file);
+  }, [processImportData]);
+
+  const handleTextImport = useCallback(() => {
+    try {
+      const parsed = JSON.parse(importText);
+      processImportData(parsed);
+    } catch (err) {
+      showToast('Invalid JSON text');
+    }
+  }, [importText, processImportData]);
+
+  const exportFullProfile = useCallback(() => {
+    const profile = {
+      cases: cases.map(c => {
+        const out = { ...c };
+        delete out.caseImage;
+        delete out.featuredImage;
+        delete out.rarityColor;
+        
+        out.color = c.color || c.rarityColor?.replace('#', '') || 'ccff00';
+        out.items = c.items.map(i => {
+          const itemOut = { ...i };
+          delete itemOut._uid;
+          delete itemOut._name;
+          delete itemOut._image;
+          delete itemOut._rarityColor;
+          return itemOut;
+        });
+        return out;
+      })
+    };
+
+    const blob = new Blob([JSON.stringify(profile, null, 4)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'cases.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Full profile exported!');
+  }, [cases]);
 
   const showToast = useCallback((msg) => {
     setToast(msg);
@@ -189,7 +314,7 @@ export default function CaseCreator() {
 
   /* ── CRUD helpers ── */
   const addSkinToCase = useCallback(
-    (skin) => {
+    (skin, customWear = 0, customWeight = null) => {
       setCases((prev) => {
         const next = [...prev];
         const currentCase = next[activeCaseIdx];
@@ -203,13 +328,11 @@ export default function CaseCreator() {
             ...currentCase,
             items: currentCase.items.filter((_, idx) => idx !== existingIdx)
           };
-          // Cannot call showToast easily inside setCases without breaking the pure function rule for state updates,
-          // but showToast isn't strictly necessary for removal if the visual feedback is instant.
-          // Wait, showToast can be called here because we are in an event handler, but React setState might run twice in StrictMode.
-          // It's safe enough for a toast.
           setTimeout(() => showToast(`Removed ${skin.name}`), 0);
         } else {
-          const rarityEntry = RARITY_MAP[skin.rarity?.id] || { value: 'mil-spec', color: '#4b69ff', num: 3 };
+          const rarityVal = RARITY_MAP[skin.rarity?.id]?.value || 'mil-spec';
+          const rarityEntry = Object.values(RARITY_MAP).find(x => x.value === rarityVal) || { value: rarityVal, color: '#4b69ff', num: 3 };
+          
           const newItem = {
             _uid: `${skin.weapon.weapon_id}_${skin.paint_index}_${Date.now()}`,
             _name: skin.name,
@@ -218,9 +341,9 @@ export default function CaseCreator() {
             category: 'weapon',
             weaponIndex: skin.weapon.weapon_id,
             paintkitIndex: parseInt(skin.paint_index, 10),
-            wearTier: 0,
-            rarity: rarityEntry.value,
-            weight: 10,
+            wearTier: customWear,
+            rarity: rarityVal,
+            weight: customWeight !== null ? Number(customWeight) : 10,
           };
           next[activeCaseIdx] = {
             ...currentCase,
@@ -319,11 +442,11 @@ export default function CaseCreator() {
         
         setCases((prev) => [...prev, newCase]);
         setActiveCaseIdx(cases.length);
-        showToast('Case imported!');
+        showToast('Case imported successfully!');
       } catch (err) {
         showToast('Invalid JSON file');
       }
-      e.target.value = null; // Reset input
+      if (singleImportRef.current) singleImportRef.current.value = '';
     };
     reader.readAsText(file);
   }, [cases.length, allSkins, showToast]);
@@ -352,21 +475,21 @@ export default function CaseCreator() {
 
   /* ═══ Generate SITE PHP format ═══ */
   const generateSitePHP = useCallback((c, cIdx) => {
-    const fname = `CASE_${c.name.toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/_+$/, '')}`;
-    const caseImgPath = `/cases/${fname}/case_${c.id}.png`;
-    const featPath = `/cases/${fname}/featured_${c.id}.png`;
-    const colorHex = c.rarityColor || c.color;
+    const caseImgPath = `/cases/case_${c.id}.png`;
+    const featPath = `/cases/featured_${c.id}.png`;
+    const rawColor = c.rarityColor || c.color || 'ccff00';
+    const colorHex = rawColor.startsWith('#') ? rawColor : `#${rawColor}`;
 
     const lines = [];
-    lines.push(`[`);
-    lines.push(`    'id' => ${cIdx + 1},`);
-    lines.push(`    'name' => '${c.name.replace(/'/g, "\\'")}',`);
-    lines.push(`    'description' => '${(c.description || '').replace(/'/g, "\\'")}',`);
-    lines.push(`    'price' => ${Number(c.price)},`);
-    lines.push(`    'image' => '${caseImgPath}',`);
-    lines.push(`    'rarity_color' => '${colorHex}',`);
-    lines.push(`    'featured_weapon' => '${featPath}',`);
-    lines.push(`    'contents' => [`);
+    lines.push(`        [`);
+    lines.push(`            'id' => ${cIdx + 1},`);
+    lines.push(`            'name' => '${c.name.replace(/'/g, "\\'")}',`);
+    lines.push(`            'description' => '${(c.description || '').replace(/'/g, "\\'")}',`);
+    lines.push(`            'price' => ${Number(c.price)},`);
+    lines.push(`            'image' => '${caseImgPath}',`);
+    lines.push(`            'rarity_color' => '${colorHex}',`);
+    lines.push(`            'featured_weapon' => '${featPath}',`);
+    lines.push(`            'contents' => [`);
 
     const rarityGroups = {};
     c.items.forEach((item) => {
@@ -390,15 +513,15 @@ export default function CaseCreator() {
       const items = rarityGroups[rarity];
       if (!items || items.length === 0) return;
       const rarityNum = RARITY_NUM[rarity] || 3;
-      lines.push(`        // ${rarityComments[rarity] || rarity}`);
+      lines.push(`                // ${rarityComments[rarity] || rarity}`);
       items.forEach((item) => {
         const label = (item._name || `Weapon ${item.weaponIndex} | Paint ${item.paintkitIndex}`).replace(/'/g, "\\'");
-        lines.push(`        ['weapon_defindex' => ${Number(item.weaponIndex)}, 'paintkit_index' => ${Number(item.paintkitIndex)}, 'wear_tier' => ${Number(item.wearTier)}, 'rarity' => ${rarityNum}, 'weight' => ${Number(item.weight)}, 'label' => '${label}'],`);
+        lines.push(`                ['weapon_defindex' => ${Number(item.weaponIndex)}, 'paintkit_index' => ${Number(item.paintkitIndex)}, 'wear_tier' => ${Number(item.wearTier)}, 'rarity' => ${rarityNum}, 'weight' => ${Number(item.weight)}, 'label' => '${label}'],`);
       });
     });
 
-    lines.push(`    ],`);
-    lines.push(`],`);
+    lines.push(`            ],`);
+    lines.push(`        ]`);
     return lines.join('\n');
   }, []);
 
@@ -417,7 +540,7 @@ export default function CaseCreator() {
     folder.file('server.json', generateServerJSON(c));
 
     /* 2. site.php */
-    const phpContent = `<?php\n// Site case config for: ${c.name}\n// Generated by Case Creator\n\nreturn ${generateSitePHP(c, activeCaseIdx)};\n`;
+    const phpContent = `${generateSitePHP(c, activeCaseIdx)},\n`;
     folder.file('site.php', phpContent);
 
     /* 3. Case image */
@@ -445,6 +568,55 @@ export default function CaseCreator() {
     showToast(`Saved ${folderName}.zip — server.json + site.php + images`);
   }, [activeCase, activeCaseIdx, folderName, generateServerJSON, generateSitePHP, showToast]);
 
+  /* ═══ SAVE FULL CONFIG — ZIP containing all cases ═══ */
+  const saveFullConfig = useCallback(async () => {
+    if (cases.length === 0) {
+      showToast('No cases to save!');
+      return;
+    }
+
+    const zip = new JSZip();
+    const mainFolder = zip.folder("FULL_CONFIG");
+
+    /* 1. server.json */
+    const serverCases = cases.map((c) => JSON.parse(generateServerJSON(c)));
+    mainFolder.file("server.json", JSON.stringify({ cases: serverCases }, null, 4));
+
+    /* 2. site.php */
+    const phpLines = [];
+    cases.forEach((c, idx) => {
+      const casePhp = generateSitePHP(c, idx);
+      phpLines.push(casePhp + ",");
+    });
+    mainFolder.file("site.php", phpLines.join("\n"));
+
+    /* 3. images folder */
+    const imagesFolder = mainFolder.folder("cases");
+    for (let i = 0; i < cases.length; i++) {
+      const c = cases[i];
+      if (c.caseImage) {
+        const buf = await readFileAsArrayBuffer(c.caseImage);
+        const ext = c.caseImage.name?.split('.').pop() || 'png';
+        imagesFolder.file(`case_${c.id}.${ext}`, buf);
+      }
+      if (c.featuredImage) {
+        const buf = await readFileAsArrayBuffer(c.featuredImage);
+        const ext = c.featuredImage.name?.split('.').pop() || 'png';
+        imagesFolder.file(`featured_${c.id}.${ext}`, buf);
+      }
+    }
+
+    /* Generate and download ZIP */
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `FULL_CONFIG.zip`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast(`Saved FULL_CONFIG.zip!`);
+  }, [cases, generateServerJSON, generateSitePHP, showToast]);
+
   /* ── Helpers ── */
   const isSkinInCase = useCallback(
     (skin) =>
@@ -470,6 +642,7 @@ export default function CaseCreator() {
     return base.substring(0, 6) + '...' + ext;
   };
 
+  const OPEN_CASE_FALLBACK = '/open-case-fallback.png';
   const caseImagePreview = activeCase.caseImage ? URL.createObjectURL(activeCase.caseImage) : null;
   const featuredImagePreview = activeCase.featuredImage ? URL.createObjectURL(activeCase.featuredImage) : null;
 
@@ -515,22 +688,41 @@ export default function CaseCreator() {
                 )}
               </button>
             ))}
-            <button className="cc-case-tab-add" onClick={addCase} title="Add new case">
-            <Plus size={16} />
-          </button>
-          <button className="cc-case-tab-add" onClick={() => importFileRef.current?.click()} title="Import JSON Case">
-            <Upload size={14} />
+            <button className="cc-case-tab-add" onClick={addCase} title="Add new case" style={{ padding: '0 1rem', width: 'auto', fontSize: '0.85rem' }}>
+            <Plus size={14} style={{ marginRight: '6px' }} /> Generate New
           </button>
           <input
-            ref={importFileRef}
+            ref={singleImportRef}
             type="file"
             accept=".json"
             style={{ display: 'none' }}
             onChange={importCase}
           />
+          <div style={{ flex: 1 }} />
+          <div className="cc-mode-toggle">
+            <button className={appMode === 'editor' ? 'active' : ''} onClick={() => setAppMode('editor')}>Editor</button>
+            <button className={appMode === 'simulator' ? 'active' : ''} onClick={() => setAppMode('simulator')}>Simulator Preview</button>
+          </div>
+          <button className="cc-action-btn" onClick={() => setShowImportModal(true)} title="Upload full configuration (cases.json)">
+            <Upload size={14} /> Upload FULL CONFIG
+          </button>
+          <button className="cc-action-btn primary" onClick={saveFullConfig} title="Download ZIP with server/site files">
+            <Download size={14} /> Export FULL CONFIG (ZIP)
+          </button>
+          <button className="cc-action-btn" onClick={exportFullProfile} title="Download cases.json backup" style={{ opacity: 0.5 }}>
+            <Save size={14} /> Backup Save
+          </button>
+            <input
+              ref={importFileRef}
+              type="file"
+              accept=".json"
+              style={{ display: 'none' }}
+              onChange={importProfile}
+            />
           </div>
 
-          {/* ── 3-column grid ── */}
+          {/* ── Main Content ── */}
+          {appMode === 'editor' ? (
           <div className="case-creator-grid">
             {/* ═══ LEFT: All Case Settings ═══ */}
             <div className="cc-panel">
@@ -578,16 +770,22 @@ export default function CaseCreator() {
                   />
                 </div>
                 <div className="cc-field">
-                  <label>Color (server)</label>
+                  <label>Case Color</label>
                   <div className="cc-color-preview">
                     <input
                       type="color"
                       value={activeCase.color.startsWith('#') ? activeCase.color : `#${activeCase.color}`}
-                      onChange={(e) => updateCase('color', e.target.value)}
+                      onChange={(e) => {
+                        updateCase('color', e.target.value);
+                        updateCase('rarityColor', e.target.value);
+                      }}
                     />
                     <input
                       value={activeCase.color}
-                      onChange={(e) => updateCase('color', e.target.value)}
+                      onChange={(e) => {
+                        updateCase('color', e.target.value);
+                        updateCase('rarityColor', e.target.value);
+                      }}
                       style={{ flex: 1 }}
                     />
                   </div>
@@ -613,22 +811,8 @@ export default function CaseCreator() {
                 </div>
               </div>
 
+
               <div className="cc-inline">
-                <div className="cc-field">
-                  <label>Rarity Color (site)</label>
-                  <div className="cc-color-preview">
-                    <input
-                      type="color"
-                      value={activeCase.rarityColor?.startsWith('#') ? activeCase.rarityColor : `#${activeCase.rarityColor || '#ccff00'}`}
-                      onChange={(e) => updateCase('rarityColor', e.target.value)}
-                    />
-                    <input
-                      value={activeCase.rarityColor || ''}
-                      onChange={(e) => updateCase('rarityColor', e.target.value)}
-                      style={{ flex: 1 }}
-                    />
-                  </div>
-                </div>
                 <div className="cc-toggle-row">
                   <label>Enabled</label>
                   <div
@@ -640,7 +824,7 @@ export default function CaseCreator() {
 
               {/* ── Images ── */}
               <div className="cc-section-divider">
-                <Image size={13} /> Images
+                <Eye size={13} /> Images
               </div>
 
               <div className="cc-field">
@@ -723,7 +907,7 @@ export default function CaseCreator() {
               {/* ── Actions ── */}
               <div className="cc-actions">
                 <button className="cc-btn primary cc-btn-save" onClick={saveCase}>
-                  <Save size={15} /> Save Case
+                  <Save size={15} /> Export Single Case (ZIP)
                 </button>
                 <button className="cc-btn" onClick={() => setShowPreview(!showPreview)}>
                   <FileJson size={15} /> {showPreview ? 'Hide' : 'Preview'}
@@ -759,9 +943,8 @@ export default function CaseCreator() {
                     </button>
                   </div>
                   <div className="cc-json-output">
-                    {previewTab === 'server'
-                      ? generateServerJSON(activeCase)
-                      : generateSitePHP(activeCase, activeCaseIdx)}
+                    {previewTab === 'server' && generateServerJSON(activeCase)}
+                    {previewTab === 'site' && generateSitePHP(activeCase, activeCaseIdx)}
                   </div>
                 </div>
               )}
@@ -844,7 +1027,15 @@ export default function CaseCreator() {
                             key={skin.id}
                             className={`cc-skin-card ${selected ? 'selected' : ''}`}
                             style={{ '--rarity-color': rarityColor }}
-                            onClick={() => addSkinToCase(skin)}
+                            onClick={() => {
+                              if (selected) {
+                                addSkinToCase(skin);
+                              } else {
+                                setAddWear(0);
+                                setAddWeight(10);
+                                setSkinToAdd(skin);
+                              }
+                            }}
                             title={selected ? `Remove ${skin.name}` : `Add ${skin.name}`}
                           >
                             {selected && (
@@ -935,27 +1126,29 @@ export default function CaseCreator() {
                         </strong>
                         <span>WI:{item.weaponIndex} / PK:{item.paintkitIndex}</span>
                       </div>
-                      <div className="cc-case-item-meta">
+                      <div className="cc-case-item-meta" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginTop: '0.25rem' }}>
                         <select
                           className="cc-wear-select"
                           value={item.wearTier}
                           onChange={(e) => updateItem(item._uid, 'wearTier', parseInt(e.target.value, 10))}
+                          style={{ padding: '0.3rem 0.5rem', borderRadius: '4px', background: 'rgba(0,0,0,0.4)', color: WEAR_TIERS.find(w => w.value === item.wearTier)?.color || '#fff', border: '1px solid rgba(255,255,255,0.1)', outline: 'none', fontWeight: 600, fontSize: '0.75rem', cursor: 'pointer' }}
                         >
                           {WEAR_TIERS.map((w) => (
-                            <option key={w.value} value={w.value}>{w.label}</option>
+                            <option key={w.value} value={w.value} style={{ background: '#0f172a', color: w.color }}>{w.label}</option>
                           ))}
                         </select>
-                        <div className="cc-case-item-weight" title="Chance / Weight">
-                          <label>Chance</label>
+                        <div className="cc-case-item-weight" title="Chance / Weight" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(0,0,0,0.4)', padding: '0.2rem 0.5rem', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                          <label style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase' }}>Chance</label>
                           <input
                             type="number"
                             min="0.01"
                             step="0.01"
                             value={item.weight}
                             onChange={(e) => updateItem(item._uid, 'weight', parseFloat(e.target.value) || 1)}
+                            style={{ width: '50px', background: 'transparent', border: 'none', color: '#fff', fontWeight: 'bold', fontSize: '0.85rem', outline: 'none', textAlign: 'right' }}
                           />
                         </div>
-                        <button className="cc-remove-btn" onClick={() => removeItem(item._uid)} title="Remove">
+                        <button className="cc-remove-btn" onClick={() => removeItem(item._uid)} title="Remove" style={{ padding: '0.35rem 0.5rem', background: 'rgba(255,50,50,0.1)', color: '#ff4444', borderRadius: '4px', border: '1px solid rgba(255,50,50,0.2)', cursor: 'pointer', transition: 'all 0.2s' }}>
                           <Trash2 size={13} />
                         </button>
                       </div>
@@ -965,7 +1158,216 @@ export default function CaseCreator() {
               )}
             </div>
           </div>
+          ) : (
+            <div className="cc-simulator-layout">
+              <div className="cc-sim-hero">
+                <img 
+                  src={activeCase.caseImage ? URL.createObjectURL(activeCase.caseImage) : OPEN_CASE_FALLBACK} 
+                  alt="Open Case" 
+                  className="cc-sim-case-img" 
+                  onError={(e) => { 
+                    if (!activeCase.caseImage && e.target.src.includes('open-case-fallback.png')) {
+                      e.target.src = 'https://community.akamai.steamstatic.com/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXU5A1PIYQNqhpOSV-fRPasw8rsUFJ5KBFZv668FFU1nfbOIj8W7oWzkYLZq77xN-KFxj4GvsYpj-uS9I2njQ3j-kQ8YTzyIIaXcQE4NAqG-gK2kP-5hJ--vZrI1zI97ZfJbI2Z/200fx200f';
+                    } else {
+                      e.target.style.display = 'none';
+                    }
+                  }} 
+                />
+                
+                <div className="cc-sim-actions">
+                  <button className="cc-sim-btn-primary">
+                    <Package size={18} /> OPEN CASE <span>1500</span>
+                  </button>
+                  <div className="cc-sim-btn-row">
+                    <button className="cc-sim-btn-outline">OPEN X3 <span>4500</span></button>
+                    <button className="cc-sim-btn-outline red">OPEN X5 <span>7500</span></button>
+                  </div>
+                </div>
+
+                <div className="cc-sim-stats">
+                  <div>Opened: <span>40</span></div>
+                  <div>Spent: <span style={{ color: '#ff9900' }}>58,450</span></div>
+                  <div>Best: <span style={{ color: '#e4ae39' }}>★ Hand Wraps</span></div>
+                </div>
+              </div>
+
+              <div className="cc-visual-preview" data-lenis-prevent>
+                <div className="cc-visual-header">
+                  <Package size={14}/> POSSIBLE DROPS ({activeCase.items.length} ITEMS)
+                </div>
+                <div className="cc-visual-grid">
+                  {activeCase.items.map((item) => {
+                    const totalWeight = activeCase.items.reduce((sum, i) => sum + (Number(i.weight) || 1), 0);
+                    const chance = ((Number(item.weight) || 1) / Math.max(1, totalWeight)) * 100;
+                    return (
+                      <div key={item._uid} className="cc-visual-card" style={{ '--rarity-color': item._rarityColor || '#94a3b8' }}>
+                        <img src={item._image} alt={item._name} loading="lazy" />
+                        <div className="cc-visual-name" title={item._name}>
+                          {item._name?.split('|').pop()?.trim() || item._name}
+                        </div>
+                        <div className="cc-visual-rarity">{item.rarity}</div>
+                        <div className="cc-visual-chance">{chance.toFixed(4)}%</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+          {/* ── JSON Export Previews ── */}
+          {showPreview && (
+            <div className="cc-preview-overlay" onClick={() => setShowPreview(false)}>
+              <div className="cc-preview-modal" onClick={(e) => e.stopPropagation()}>
+                <div className="cc-preview-header">
+                  <div className="cc-preview-tabs">
+                    <button
+                      className={`cc-preview-tab ${previewTab === 'server' ? 'active' : ''}`}
+                      onClick={() => setPreviewTab('server')}
+                    >
+                      server.json
+                    </button>
+                    <button
+                      className={`cc-preview-tab ${previewTab === 'site' ? 'active' : ''}`}
+                      onClick={() => setPreviewTab('site')}
+                    >
+                      site.php
+                    </button>
+                  </div>
+                  <div style={{ flex: 1 }} />
+                  <button className="cc-icon-btn" onClick={() => {
+                    const txt = previewTab === 'server' ? generateServerJSON(activeCase) : generateSitePHP(activeCase, activeCaseIdx);
+                    navigator.clipboard.writeText(txt);
+                    showToast('Copied to clipboard!');
+                  }}>
+                    <Copy size={16} />
+                  </button>
+                  <button className="cc-icon-btn" onClick={() => setShowPreview(false)}>
+                    <X size={16} />
+                  </button>
+                </div>
+                <div className="cc-preview-section">
+                  {previewTab === 'server' && (
+                    <pre className="cc-json-output">{generateServerJSON(activeCase)}</pre>
+                  )}
+                  {previewTab === 'site' && (
+                    <pre className="cc-json-output">{generateSitePHP(activeCase, activeCaseIdx)}</pre>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Import Modal ── */}
+          {showImportModal && (
+            <div className="cc-preview-overlay" onClick={() => setShowImportModal(false)}>
+              <div className="cc-preview-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+                <div className="cc-preview-header">
+                  <h3>Import Cases Profile</h3>
+                  <div style={{ flex: 1 }} />
+                  <button className="cc-icon-btn" onClick={() => setShowImportModal(false)}>
+                    <X size={16} />
+                  </button>
+                </div>
+                <div className="cc-preview-section" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', background: '#0d0f12' }}>
+                  <p style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Paste your complete cases.json text below, OR upload the file directly.</p>
+                  <textarea 
+                    className="cc-textarea" 
+                    rows={8} 
+                    placeholder='{"cases": [ ... ]}'
+                    value={importText}
+                    onChange={(e) => setImportText(e.target.value)}
+                    style={{ fontFamily: 'monospace' }}
+                  />
+                  <div style={{ display: 'flex', gap: '1rem' }}>
+                    <button className="cc-sim-btn-primary" onClick={handleTextImport} style={{ flex: 1, justifyContent: 'center', padding: '0.75rem' }}>
+                      Import Text
+                    </button>
+                    <button className="cc-sim-btn-outline" onClick={() => importFileRef.current?.click()} style={{ flex: 1, textAlign: 'center' }}>
+                      <Upload size={16} style={{ display: 'inline', verticalAlign: '-3px', marginRight: '6px' }} />
+                      Upload JSON File
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
+
+        {/* ── Add Skin Modal ── */}
+        {skinToAdd && (
+          <div className="cc-preview-overlay" onClick={() => setSkinToAdd(null)} style={{ backdropFilter: 'blur(5px)' }}>
+            <div className="cc-preview-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '460px', background: 'rgba(15, 20, 25, 0.9)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 30px 60px rgba(0,0,0,0.6)', borderRadius: '16px', overflow: 'hidden' }}>
+              <div className="cc-preview-header" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '1.25rem 1.5rem' }}>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Add Skin</h3>
+                <div style={{ flex: 1 }} />
+                <button className="cc-icon-btn" onClick={() => setSkinToAdd(null)}>
+                  <X size={18} />
+                </button>
+              </div>
+              <div className="cc-preview-section" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', background: 'transparent' }}>
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                  <img src={skinToAdd.image} style={{ width: '90px', height: '65px', objectFit: 'contain', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.3))' }} />
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: '1.1rem', color: '#fff' }}>{skinToAdd.pattern?.name || skinToAdd.name}</div>
+                    <div style={{ fontSize: '0.85rem', color: '#94a3b8', marginTop: '0.2rem' }}>{skinToAdd.weapon?.name}</div>
+                  </div>
+                </div>
+                
+                <div className="cc-field">
+                  <label style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#64748b', marginBottom: '0.5rem', display: 'block', fontWeight: 600 }}>Wear Condition</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '0.5rem' }}>
+                    {[
+                      { label: 'Factory New', value: 0, color: '#00cc66' },
+                      { label: 'Minimal Wear', value: 1, color: '#99ff33' },
+                      { label: 'Field-Tested', value: 2, color: '#ffcc00' },
+                      { label: 'Well-Worn', value: 3, color: '#ff9933' },
+                      { label: 'Battle-Scarred', value: 4, color: '#ff3300' }
+                    ].map((w) => {
+                      const isSelected = addWear === w.value;
+                      return (
+                        <button
+                          key={w.value}
+                          onClick={() => setAddWear(w.value)}
+                          style={{
+                            background: isSelected ? `${w.color}15` : 'rgba(255,255,255,0.02)',
+                            border: `1px solid ${isSelected ? w.color : 'rgba(255,255,255,0.05)'}`,
+                            color: isSelected ? w.color : '#64748b',
+                            padding: '0.6rem 0.5rem',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontSize: '0.7rem',
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                            boxShadow: isSelected ? `0 0 12px ${w.color}33 inset` : 'none',
+                          }}
+                        >
+                          {w.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="cc-field">
+                  <label style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#64748b', marginBottom: '0.5rem', display: 'block', fontWeight: 600 }}>Drop Chance (Weight)</label>
+                  <input type="number" min="0" value={addWeight} onChange={(e) => setAddWeight(e.target.value)} style={{ width: '100%', padding: '0.8rem 1rem', background: 'rgba(0,0,0,0.3)', color: '#fff', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', fontSize: '1.2rem', fontWeight: 'bold', outline: 'none', transition: 'border-color 0.2s' }} onFocus={(e) => e.target.style.borderColor = 'var(--color-primary)'} onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.08)'} />
+                </div>
+                
+                <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                  <button className="cc-sim-btn-outline" onClick={() => setSkinToAdd(null)} style={{ flex: 1, padding: '0.8rem', borderRadius: '8px', fontWeight: 600 }}>
+                    Cancel
+                  </button>
+                  <button className="cc-sim-btn-primary" onClick={() => {
+                    addSkinToCase(skinToAdd, addWear, addWeight);
+                    setSkinToAdd(null);
+                  }} style={{ flex: 1, justifyContent: 'center', padding: '0.8rem', borderRadius: '8px', fontWeight: 600, fontSize: '1rem' }}>
+                    Add to Case
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className={`cc-toast ${toast ? 'visible' : ''}`}>
           <Check size={16} /> {toast}
