@@ -842,6 +842,9 @@
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.035);
   border: 1px solid rgba(255, 255, 255, 0.06);
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .cc-image-thumb {
@@ -869,6 +872,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex: 1;
+  min-width: 0;
 }
 
 /* ── Folder info & tree ── */

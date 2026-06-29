@@ -82,11 +82,25 @@ export default function CaseCreator() {
 
   const [search, setSearch] = useState('');
   const [rarityFilter, setRarityFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const [weaponFilter, setWeaponFilter] = useState('all');
   const [page, setPage] = useState(1);
 
-  const [cases, setCases] = useState([createDefaultCase(0)]);
+  const [cases, setCases] = useState(() => {
+    try {
+      const saved = localStorage.getItem('case_creator_save');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error(e);
+    }
+    return [createDefaultCase(0)];
+  });
   const [activeCaseIdx, setActiveCaseIdx] = useState(0);
+
+  useEffect(() => {
+    const toSave = cases.map(c => ({ ...c, caseImage: null, featuredImage: null }));
+    localStorage.setItem('case_creator_save', JSON.stringify(toSave));
+  }, [cases]);
 
   const [toast, setToast] = useState('');
   const toastTimer = useRef(null);
@@ -95,6 +109,7 @@ export default function CaseCreator() {
 
   const caseImgRef = useRef(null);
   const featImgRef = useRef(null);
+  const importFileRef = useRef(null);
 
   const activeCase = cases[activeCaseIdx] || cases[0];
 
@@ -128,6 +143,12 @@ export default function CaseCreator() {
       });
   }, []);
 
+  const categoryNames = useMemo(() => {
+    const names = new Set();
+    allSkins.forEach((s) => s.category?.name && names.add(s.category.name));
+    return [...names].sort();
+  }, [allSkins]);
+
   const weaponNames = useMemo(() => {
     const names = new Set();
     allSkins.forEach((s) => s.weapon?.name && names.add(s.weapon.name));
@@ -148,11 +169,14 @@ export default function CaseCreator() {
     if (rarityFilter !== 'all') {
       result = result.filter((s) => RARITY_MAP[s.rarity?.id]?.value === rarityFilter);
     }
+    if (categoryFilter !== 'all') {
+      result = result.filter((s) => s.category?.name === categoryFilter);
+    }
     if (weaponFilter !== 'all') {
       result = result.filter((s) => s.weapon?.name === weaponFilter);
     }
     return result;
-  }, [allSkins, search, rarityFilter, weaponFilter]);
+  }, [allSkins, search, rarityFilter, categoryFilter, weaponFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filteredSkins.length / ITEMS_PER_PAGE));
   const currentPage = Math.min(page, totalPages);
@@ -161,33 +185,51 @@ export default function CaseCreator() {
     currentPage * ITEMS_PER_PAGE
   );
 
-  useEffect(() => setPage(1), [search, rarityFilter, weaponFilter]);
+  useEffect(() => setPage(1), [search, rarityFilter, categoryFilter, weaponFilter]);
 
   /* ── CRUD helpers ── */
   const addSkinToCase = useCallback(
     (skin) => {
-      const rarityEntry = RARITY_MAP[skin.rarity?.id] || { value: 'mil-spec', color: '#4b69ff', num: 3 };
-      const newItem = {
-        _uid: `${skin.weapon.weapon_id}_${skin.paint_index}_${Date.now()}`,
-        _name: skin.name,
-        _image: skin.image,
-        _rarityColor: rarityEntry.color,
-        category: 'weapon',
-        weaponIndex: skin.weapon.weapon_id,
-        paintkitIndex: parseInt(skin.paint_index, 10),
-        wearTier: 0,
-        rarity: rarityEntry.value,
-        weight: 10,
-      };
       setCases((prev) => {
         const next = [...prev];
-        next[activeCaseIdx] = {
-          ...next[activeCaseIdx],
-          items: [...next[activeCaseIdx].items, newItem],
-        };
+        const currentCase = next[activeCaseIdx];
+        
+        const existingIdx = currentCase.items.findIndex(
+          (i) => i.weaponIndex === skin.weapon?.weapon_id && i.paintkitIndex === parseInt(skin.paint_index, 10)
+        );
+
+        if (existingIdx !== -1) {
+          next[activeCaseIdx] = {
+            ...currentCase,
+            items: currentCase.items.filter((_, idx) => idx !== existingIdx)
+          };
+          // Cannot call showToast easily inside setCases without breaking the pure function rule for state updates,
+          // but showToast isn't strictly necessary for removal if the visual feedback is instant.
+          // Wait, showToast can be called here because we are in an event handler, but React setState might run twice in StrictMode.
+          // It's safe enough for a toast.
+          setTimeout(() => showToast(`Removed ${skin.name}`), 0);
+        } else {
+          const rarityEntry = RARITY_MAP[skin.rarity?.id] || { value: 'mil-spec', color: '#4b69ff', num: 3 };
+          const newItem = {
+            _uid: `${skin.weapon.weapon_id}_${skin.paint_index}_${Date.now()}`,
+            _name: skin.name,
+            _image: skin.image,
+            _rarityColor: rarityEntry.color,
+            category: 'weapon',
+            weaponIndex: skin.weapon.weapon_id,
+            paintkitIndex: parseInt(skin.paint_index, 10),
+            wearTier: 0,
+            rarity: rarityEntry.value,
+            weight: 10,
+          };
+          next[activeCaseIdx] = {
+            ...currentCase,
+            items: [...currentCase.items, newItem]
+          };
+          setTimeout(() => showToast(`Added ${skin.name}`), 0);
+        }
         return next;
       });
-      showToast(`Added ${skin.name}`);
     },
     [activeCaseIdx, showToast]
   );
@@ -243,6 +285,48 @@ export default function CaseCreator() {
     setCases((prev) => prev.filter((_, i) => i !== idx));
     setActiveCaseIdx((prev) => Math.min(prev, cases.length - 2));
   };
+
+  const importCase = useCallback((e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        const newCase = createDefaultCase(cases.length);
+        
+        newCase.id = data.id || newCase.id;
+        newCase.name = data.name || newCase.name;
+        newCase.price = data.price || newCase.price;
+        newCase.color = data.color || newCase.color;
+        newCase.enabled = data.enabled !== false;
+        newCase.cooldownSeconds = data.cooldownSeconds || 30;
+        newCase.maxOpensPerRound = data.maxOpensPerRound || 3;
+        
+        if (data.items && Array.isArray(data.items)) {
+          newCase.items = data.items.map(item => {
+            const skin = allSkins.find(s => s.weapon?.weapon_id == item.weaponIndex && s.paint_index == item.paintkitIndex);
+            return {
+              ...item,
+              _uid: `${item.weaponIndex}_${item.paintkitIndex}_${Date.now()}_${Math.random()}`,
+              _name: skin ? skin.name : `Weapon ${item.weaponIndex} | Paint ${item.paintkitIndex}`,
+              _image: skin ? skin.image : '',
+              _rarityColor: skin ? (RARITY_MAP[skin.rarity?.id]?.color || '#94a3b8') : '#94a3b8',
+            };
+          });
+        }
+        
+        setCases((prev) => [...prev, newCase]);
+        setActiveCaseIdx(cases.length);
+        showToast('Case imported!');
+      } catch (err) {
+        showToast('Invalid JSON file');
+      }
+      e.target.value = null; // Reset input
+    };
+    reader.readAsText(file);
+  }, [cases.length, allSkins, showToast]);
 
   /* ═══ Generate SERVER JSON (Trapi format) ═══ */
   const generateServerJSON = useCallback((c) => {
@@ -377,6 +461,15 @@ export default function CaseCreator() {
   const getRarityLabel = (skin) =>
     RARITY_MAP[skin.rarity?.id]?.label || skin.rarity?.name || 'Unknown';
 
+  const shortenFileName = (name) => {
+    if (!name) return '';
+    const parts = name.split('.');
+    const ext = parts.length > 1 ? '.' + parts.pop() : '';
+    const base = parts.join('.');
+    if (base.length <= 8) return name;
+    return base.substring(0, 6) + '...' + ext;
+  };
+
   const caseImagePreview = activeCase.caseImage ? URL.createObjectURL(activeCase.caseImage) : null;
   const featuredImagePreview = activeCase.featuredImage ? URL.createObjectURL(activeCase.featuredImage) : null;
 
@@ -423,8 +516,18 @@ export default function CaseCreator() {
               </button>
             ))}
             <button className="cc-case-tab-add" onClick={addCase} title="Add new case">
-              <Plus size={16} />
-            </button>
+            <Plus size={16} />
+          </button>
+          <button className="cc-case-tab-add" onClick={() => importFileRef.current?.click()} title="Import JSON Case">
+            <Upload size={14} />
+          </button>
+          <input
+            ref={importFileRef}
+            type="file"
+            accept=".json"
+            style={{ display: 'none' }}
+            onChange={importCase}
+          />
           </div>
 
           {/* ── 3-column grid ── */}
@@ -547,7 +650,9 @@ export default function CaseCreator() {
                     <div className="cc-image-preview-box">
                       <img src={caseImagePreview} alt="Case" className="cc-image-thumb" />
                       <div className="cc-image-preview-info">
-                        <span className="cc-image-path">{activeCase.caseImage?.name}</span>
+                        <span className="cc-image-path" title={activeCase.caseImage?.name}>
+                          {shortenFileName(activeCase.caseImage?.name)}
+                        </span>
                         <button className="cc-remove-btn" onClick={() => updateCase('caseImage', null)}>
                           <X size={12} />
                         </button>
@@ -577,7 +682,9 @@ export default function CaseCreator() {
                     <div className="cc-image-preview-box">
                       <img src={featuredImagePreview} alt="Featured" className="cc-image-thumb" />
                       <div className="cc-image-preview-info">
-                        <span className="cc-image-path">{activeCase.featuredImage?.name}</span>
+                        <span className="cc-image-path" title={activeCase.featuredImage?.name}>
+                          {shortenFileName(activeCase.featuredImage?.name)}
+                        </span>
                         <button className="cc-remove-btn" onClick={() => updateCase('featuredImage', null)}>
                           <X size={12} />
                         </button>
@@ -688,6 +795,16 @@ export default function CaseCreator() {
                 </select>
                 <select
                   className="cc-filter-select"
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                >
+                  <option value="all">All Types</option>
+                  {categoryNames.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+                <select
+                  className="cc-filter-select"
                   value={weaponFilter}
                   onChange={(e) => setWeaponFilter(e.target.value)}
                 >
@@ -727,8 +844,8 @@ export default function CaseCreator() {
                             key={skin.id}
                             className={`cc-skin-card ${selected ? 'selected' : ''}`}
                             style={{ '--rarity-color': rarityColor }}
-                            onClick={() => !selected && addSkinToCase(skin)}
-                            title={selected ? 'Already in case' : `Add ${skin.name}`}
+                            onClick={() => addSkinToCase(skin)}
+                            title={selected ? `Remove ${skin.name}` : `Add ${skin.name}`}
                           >
                             {selected && (
                               <div style={{
@@ -819,15 +936,6 @@ export default function CaseCreator() {
                         <span>WI:{item.weaponIndex} / PK:{item.paintkitIndex}</span>
                       </div>
                       <div className="cc-case-item-meta">
-                        <select
-                          className="cc-item-rarity-select"
-                          value={item.rarity}
-                          onChange={(e) => updateItem(item._uid, 'rarity', e.target.value)}
-                        >
-                          {RARITY_OPTIONS.map((r) => (
-                            <option key={r} value={r}>{r}</option>
-                          ))}
-                        </select>
                         <select
                           className="cc-wear-select"
                           value={item.wearTier}
