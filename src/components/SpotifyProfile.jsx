@@ -73,6 +73,7 @@ export default function SpotifyProfile() {
   const playlists = useMemo(() => spotifyData?.playlists || [], [spotifyData?.playlists]);
   const followedArtists = useMemo(() => spotifyData?.followedArtists || [], [spotifyData?.followedArtists]);
   const followedWarning = spotifyData?.spotifyWarnings?.followedArtists;
+  const topArtistsWarning = spotifyData?.spotifyWarnings?.topArtists;
 
   const favoriteArtistName = siteConfig?.spotify?.favoriteArtist;
   const favoriteArtistData = siteConfig?.spotify?.favoriteArtistData;
@@ -115,13 +116,18 @@ export default function SpotifyProfile() {
     );
   }
 
-  if (error || !spotifyData) {
+  if (error || !spotifyData || !spotifyData.profile) {
     return (
       <div className="spotify-container spotify-state-card">
         <div className="spotify-auth-prompt">
           <Disc3 size={34} />
           <h3>Conecteaza Spotify</h3>
           <p>Afisam profilul, top artistii si playlisturile direct din API-ul Spotify.</p>
+          {spotifyData?.spotifyWarnings?.profile && (
+            <p style={{ opacity: 0.6, fontSize: '0.8rem', marginTop: '0.25rem' }}>
+              {spotifyData.spotifyWarnings.profile}
+            </p>
+          )}
           <button className="spotify-login-btn" onClick={handleLogin}>
             Login to Spotify
             <ExternalLink size={17} />
@@ -210,6 +216,10 @@ export default function SpotifyProfile() {
             </div>
             <Disc3 size={22} />
           </div>
+
+          {topArtistsWarning && (
+            <p className="spotify-panel-note">{topArtistsWarning}</p>
+          )}
 
           <div className="spotify-artists-grid">
             {visibleTopArtists.map((artist, index) => (

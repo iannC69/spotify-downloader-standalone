@@ -228,7 +228,17 @@ const spotifyPlugin = () => ({
 
         const fetchSpotifyJson = async url => {
           const response = await fetch(url, { headers: authHeaders });
-          const data = await response.json();
+
+          // Spotify may return plain text for certain errors (e.g. Premium required)
+          let data;
+          const contentType = response.headers.get('content-type') || '';
+          if (contentType.includes('application/json')) {
+            data = await response.json();
+          } else {
+            const text = await response.text();
+            // Try to parse anyway in case content-type header is wrong
+            try { data = JSON.parse(text); } catch { data = { error: { message: text || 'Spotify request failed' } }; }
+          }
 
           if (!response.ok) {
             const spotifyMessage = data?.error?.message || data?.error || 'Spotify request failed';
@@ -267,12 +277,37 @@ const spotifyPlugin = () => ({
           return items;
         };
 
-        const profile = await fetchSpotifyJson('https://api.spotify.com/v1/me');
-        const topArtists = await fetchSpotifyJson('https://api.spotify.com/v1/me/top/artists?time_range=short_term&limit=50');
-        const playlists = await fetchAllPlaylists();
+        // Each section is wrapped independently — a Premium-gated 403 on one
+        // endpoint won't crash the whole response; partial data is returned instead.
+        const spotifyWarnings = {};
+
+        let profile = null;
+        try {
+          profile = await fetchSpotifyJson('https://api.spotify.com/v1/me');
+        } catch (err) {
+          spotifyWarnings.profile = err.message;
+        }
+
+        let topArtistsItems = [];
+        try {
+          const topArtists = await fetchSpotifyJson('https://api.spotify.com/v1/me/top/artists?time_range=short_term&limit=50');
+          topArtistsItems = topArtists.items || [];
+        } catch (err) {
+          spotifyWarnings.topArtists = err.status === 403 || (err.message && err.message.toLowerCase().includes('premium'))
+            ? 'Top artists necesita un cont Spotify Premium.'
+            : err.message;
+        }
+
+        let playlists = [];
+        try {
+          playlists = await fetchAllPlaylists();
+        } catch (err) {
+          spotifyWarnings.playlists = err.status === 403 || (err.message && err.message.toLowerCase().includes('premium'))
+            ? 'Playlists necesita un cont Spotify Premium.'
+            : err.message;
+        }
 
         let followedArtists = [];
-        const spotifyWarnings = {};
         try {
           followedArtists = await fetchFollowedArtists();
         } catch (err) {
@@ -284,7 +319,7 @@ const spotifyPlugin = () => ({
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify({
           profile,
-          topArtists: topArtists.items,
+          topArtists: topArtistsItems,
           playlists,
           followedArtists,
           spotifyWarnings
@@ -344,13 +379,29 @@ const ytdlpPlugin = () => ({
         return res.end(JSON.stringify({error: 'yt-dlp binary not found. Please wait for setup to finish.'}));
       }
 
-      const child = spawn(binPath, ['--dump-json', videoUrl]);
+      const child = spawn(binPath, [
+        '--dump-json',
+        '--no-playlist',        // never expand playlists/mixes — single video only
+        '--playlist-items', '1',
+        videoUrl
+      ]);
       let dataStr = '';
       let errStr = '';
       child.stdout.on('data', chunk => dataStr += chunk);
       child.stderr && child.stderr.on('data', chunk => errStr += chunk);
 
+      // Kill yt-dlp if it hangs more than 30 seconds
+      const killTimer = setTimeout(() => {
+        try { child.kill(); } catch { /* ignore */ }
+        if (!res.headersSent) {
+          res.statusCode = 500;
+          res.end(JSON.stringify({ error: 'Request timed out. Try again or check the URL.' }));
+        }
+      }, 30000);
+
       child.on('close', code => {
+        clearTimeout(killTimer);
+        if (res.headersSent) return;
         if (code !== 0) {
           res.statusCode = 500;
           return res.end(JSON.stringify({error: 'yt-dlp failed to fetch info. Check the URL.'}));
@@ -461,12 +512,17 @@ const ytdlpPlugin = () => ({
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
 
+      // --no-playlist: never expand mixes/playlists (single video only)
+      // --newline: flush progress on each line so SSE events arrive promptly
+      args.push('--no-playlist', '--newline');
+
       const child = spawn(binPath, args);
       let finalFilename = '';
 
-      child.stdout.on('data', chunk => {
+      const handleOutput = (chunk) => {
         const str = chunk.toString();
 
+        // Destination is printed on stdout
         const destMatch = str.match(/Destination:\s*(.*)/);
         if (destMatch && destMatch[1]) {
           finalFilename = path.basename(destMatch[1].trim());
@@ -482,16 +538,17 @@ const ytdlpPlugin = () => ({
           finalFilename = path.basename(mergeMatch[1].trim());
         }
 
+        // Progress is on stderr in newer yt-dlp
         const progressMatch = str.match(/\[download\]\s+([\d.]+)%/);
         let progress = 0;
         if (progressMatch) progress = parseFloat(progressMatch[1]);
 
         res.write(`data: ${JSON.stringify({ raw: str, progress, filename: finalFilename })}\n\n`);
-      });
+      };
 
-      child.stderr && child.stderr.on('data', () => {
-        // silently consume stderr so it doesn't block
-      });
+      child.stdout.on('data', handleOutput);
+      // Route stderr through the same handler so progress reaches the client
+      child.stderr && child.stderr.on('data', handleOutput);
 
       child.on('close', code => {
         res.write(`data: ${JSON.stringify({ done: true, code, finalFilename })}\n\n`);
@@ -655,6 +712,23 @@ const ytdlpPlugin = () => ({
 const fileDownloadPlugin = () => ({
   name: 'file-download-plugin',
   configureServer(server) {
+    // Serve downloaded audio files directly (used by WaveSurfer in Mp3Cutter)
+    server.middlewares.use('/downloads', (req, res, next) => {
+      const safeFile = path.basename(req.url.split('?')[0]);
+      if (!safeFile) return next();
+      const filePath = path.resolve(os.tmpdir(), 'update-maker-downloads', safeFile);
+      if (!fs.existsSync(filePath)) {
+        res.statusCode = 404;
+        return res.end('File not found');
+      }
+      const ext = path.extname(safeFile).toLowerCase();
+      const mimeMap = { '.mp3': 'audio/mpeg', '.mp4': 'video/mp4', '.wav': 'audio/wav', '.ogg': 'audio/ogg', '.m4a': 'audio/mp4', '.webm': 'audio/webm' };
+      const mime = mimeMap[ext] || 'application/octet-stream';
+      const stat = fs.statSync(filePath);
+      res.writeHead(200, { 'Content-Type': mime, 'Content-Length': stat.size, 'Accept-Ranges': 'bytes' });
+      fs.createReadStream(filePath).pipe(res);
+    });
+
     server.middlewares.use('/api/download-file', (req, res, next) => {
       const urlObj = new URL(req.url, `http://${req.headers.host}`);
       if (urlObj.pathname !== '/') return next();
@@ -831,7 +905,14 @@ const spotifyDownloaderPlugin = () => ({
           res.write(`data: ${JSON.stringify({ raw: str, progress })}\n\n`);
         });
         
-        ytChild.stderr.on('data', () => {});
+        ytChild.stderr.on('data', chunk => {
+          const str = chunk.toString();
+          const progressMatch = str.match(/\[download\]\s+([\d.]+)%/);
+          if (progressMatch) {
+            const progress = 5 + (parseFloat(progressMatch[1]) * 0.8);
+            res.write(`data: ${JSON.stringify({ raw: str, progress })}\n\n`);
+          }
+        });
 
         await new Promise((resolve, reject) => {
           ytChild.on('close', code => {
