@@ -250,9 +250,9 @@
   width: 100%;
   background: linear-gradient(180deg, rgba(15, 23, 42, 0.8) 0%, rgba(8, 12, 20, 0.9) 100%);
   border-radius: 28px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.09);
   overflow: hidden;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), inset 0 1px rgba(255, 255, 255, 0.035);
   display: flex;
   flex-direction: column;
 }
@@ -263,6 +263,7 @@
   padding: 2rem;
   gap: 2rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: linear-gradient(115deg, rgba(255, 255, 255, 0.025), transparent 42%);
 }
 
 .ytdl-thumbnail-wrapper {
@@ -388,6 +389,8 @@
 }
 
 .ytdl-format-card {
+  position: relative;
+  overflow: hidden;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 16px;
@@ -401,6 +404,7 @@
 }
 
 .ytdl-format-card:hover {
+  transform: translateY(-3px);
   background: rgba(255, 255, 255, 0.05);
   border-color: rgba(255, 255, 255, 0.15);
 }
@@ -409,6 +413,15 @@
   background: rgba(239, 68, 68, 0.08);
   border-color: #ef4444;
   box-shadow: 0 8px 25px rgba(239, 68, 68, 0.15);
+}
+
+.ytdl-format-card.selected::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+  pointer-events: none;
 }
 
 .ytdl-format-label {
@@ -431,6 +444,167 @@
   border-top: 1px solid rgba(255, 255, 255, 0.05);
   display: flex;
   justify-content: flex-end;
+  width: 100%;
+}
+
+.ytdl-playlist-note {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 1rem;
+  color: #fbbf24;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.ytdl-playlist-note strong { color: #f8fafc; }
+.ytdl-playlist-note { display: none; }
+
+.ytdl-playlist-panel {
+  margin-top: 1.25rem;
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(245, 158, 11, 0.12), transparent 42%),
+    rgba(245, 158, 11, 0.045);
+  border-radius: 16px;
+  padding: 0.95rem;
+  color: #e2e8f0;
+}
+
+.ytdl-playlist-panel-top {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ytdl-playlist-panel-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.12);
+  border: 1px solid rgba(251, 191, 36, 0.18);
+  flex-shrink: 0;
+}
+
+.ytdl-eyebrow {
+  display: block;
+  color: #fbbf24;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  margin-bottom: 0.16rem;
+}
+
+.ytdl-playlist-panel-top strong {
+  display: -webkit-box;
+  color: #f8fafc;
+  font-size: 0.86rem;
+  line-height: 1.25;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ytdl-playlist-count {
+  margin-left: auto;
+  min-width: 46px;
+  text-align: center;
+  color: #fef3c7;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.ytdl-playlist-count small {
+  display: block;
+  margin-top: 0.2rem;
+  color: #fbbf24;
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.ytdl-playlist-preview {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.85rem 0 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(251, 191, 36, 0.12);
+}
+
+.ytdl-playlist-preview-row {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  gap: 0.5rem;
+  align-items: center;
+  color: #cbd5e1;
+  font-size: 0.72rem;
+}
+
+.ytdl-playlist-preview-row > span {
+  color: rgba(251, 191, 36, 0.8);
+  font-size: 0.65rem;
+  font-weight: 800;
+}
+
+.ytdl-playlist-preview-row strong {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: #dbeafe;
+  font-weight: 600;
+}
+
+.ytdl-playlist-preview-row small {
+  color: #94a3b8;
+  font-variant-numeric: tabular-nums;
+}
+
+.ytdl-playlist-utility {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #fcd34d;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.ytdl-playlist-utility span {
+  margin-left: auto;
+  color: #fca5a5;
+  font-size: 0.63rem;
+}
+
+.ytdl-dl-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: 0.85rem;
+  width: 100%;
+}
+
+.ytdl-dl-actions .ytdl-dl-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.ytdl-playlist-dl-btn {
+  background: linear-gradient(135deg, #f43f5e, #be123c);
+  box-shadow: 0 10px 30px rgba(225, 29, 72, 0.32);
+}
+
+.ytdl-single-dl-btn {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  color: #e2e8f0;
+  box-shadow: none;
+}
+
+.ytdl-single-dl-btn:hover {
+  background: rgba(255, 255, 255, 0.09);
+  box-shadow: none;
 }
 
 .ytdl-dl-btn {
@@ -477,6 +651,87 @@
   align-items: center;
   gap: 0.5rem;
 }
+
+.ytdl-progress-detail {
+  color: #94a3b8;
+  font-size: 0.82rem;
+  margin: -0.45rem 0 0.7rem;
+}
+
+.ytdl-progress-track {
+  width: 100%;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ytdl-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ef4444, #f97316);
+  border-radius: 4px;
+}
+
+/* Complete Block */
+.ytdl-complete-block {
+  width: 100%;
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.ytdl-complete-icon {
+  color: #22c55e;
+  filter: drop-shadow(0 0 10px rgba(34, 197, 94, 0.3));
+}
+
+.ytdl-complete-info { flex: 1; }
+.ytdl-complete-title {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin-bottom: 0.75rem;
+}
+
+
+.ytdl-name-input-row {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.ytdl-name-input {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  color: #fff;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.ytdl-name-input:focus { border-color: #22c55e; }
+
+.ytdl-save-btn {
+  background: #22c55e;
+  color: #000;
+  border-radius: 10px;
+  padding: 0 1.5rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.ytdl-save-btn:hover { background: #4ade80; transform: translateY(-1px); }
+.ytdl-save-btn.disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
 
 .ytdl-progress-track {
   width: 100%;
@@ -552,6 +807,79 @@
 .ytdl-save-btn:hover { background: #4ade80; transform: translateY(-1px); }
 .ytdl-save-btn.disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
 
+/* Modal */
+.ytdl-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.ytdl-modal {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(8, 12, 20, 0.98) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.ytdl-modal-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.ytdl-modal-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.ytdl-modal-cancel {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+  padding: 0.8rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ytdl-modal-cancel:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.ytdl-modal-confirm {
+  flex: 2;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  border: none;
+  color: #fff;
+  padding: 0.8rem;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ytdl-modal-confirm:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .ytdl-preview-section { flex-direction: column; gap: 1.5rem; }
@@ -559,4 +887,7 @@
   .ytdl-thumbnail { height: auto; aspect-ratio: 16/9; }
   .ytdl-header { flex-direction: column; text-align: center; }
   .ytdl-reset-btn { position: absolute; right: 2rem; top: 2rem; }
+  .ytdl-dl-actions { grid-template-columns: 1fr; width: 100%; }
+  .ytdl-playlist-panel { margin-top: 1rem; }
+  .ytdl-playlist-preview-row { grid-template-columns: 20px minmax(0, 1fr) auto; }
 }

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Download, Film, Loader2, AlertCircle, CheckCircle2,
-  Zap, Clock, MonitorPlay, Headphones, Link2, RefreshCw, Save
+  Zap, Clock, MonitorPlay, Headphones, Link2, RefreshCw, Save, ListVideo, Archive
 } from 'lucide-react';
 import './YoutubeDownloader.css';
 
@@ -39,6 +39,15 @@ function formatViews(n) {
   return `${n} views`;
 }
 
+function isPlaylistUrl(value) {
+  try {
+    const parsed = new URL(value);
+    return parsed.searchParams.has('list') || parsed.pathname.split('/').includes('playlist');
+  } catch {
+    return false;
+  }
+}
+
 const YoutubeDownloader = () => {
   const [url, setUrl] = useState('');
   const [info, setInfo] = useState(null);
@@ -50,10 +59,15 @@ const YoutubeDownloader = () => {
   const [selectedAudio, setSelectedAudio] = useState('mp3_320');
 
   const [downloading, setDownloading] = useState(false);
+
   const [progress, setProgress] = useState(0);
   const [downloadComplete, setDownloadComplete] = useState(false);
   const [finalFilename, setFinalFilename] = useState('');
   const [outputName, setOutputName] = useState('');
+  const [downloadScope, setDownloadScope] = useState('single');
+  const [downloadStatus, setDownloadStatus] = useState('');
+  const [showOptionsModal, setShowOptionsModal] = useState(false);
+  const [pendingScope, setPendingScope] = useState('single');
 
   const fetchInfo = async () => {
     if (!url) return;
@@ -67,7 +81,12 @@ const YoutubeDownloader = () => {
       const res = await fetch(`/api/ytdl/info?url=${encodeURIComponent(url)}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to fetch info');
-      setInfo(data);
+      let playlist = null;
+      if (isPlaylistUrl(url)) {
+        const playlistRes = await fetch('/api/ytdl/collection-info?url=' + encodeURIComponent(url));
+        if (playlistRes.ok) playlist = await playlistRes.json();
+      }
+      setInfo({ ...data, playlist });
       const safeName = (data.title || 'video').replace(/[^a-zA-Z0-9 _-]/g, '').trim().slice(0, 60);
       setOutputName(safeName);
     } catch (err) {
@@ -77,12 +96,24 @@ const YoutubeDownloader = () => {
     }
   };
 
+  const openDownloadModal = (scope = 'single') => {
+    setPendingScope(scope);
+    setShowOptionsModal(true);
+  };
+
   const startDownload = () => {
+    const scope = pendingScope;
+    setShowOptionsModal(false);
     if (!url) return;
     setDownloading(true);
     setError(null);
     setProgress(0);
     setDownloadComplete(false);
+    setDownloadScope(scope);
+    setDownloadStatus(scope === 'playlist' ? 'Se pregătește playlistul...' : 'Se pregătește descărcarea...');
+    if (scope === 'playlist' && info?.playlist?.title) {
+      setOutputName(info.playlist.title.replace(/[^a-zA-Z0-9 _-]/g, '').trim().slice(0, 60) || 'youtube_playlist');
+    }
 
     let formatStr;
 
@@ -94,15 +125,24 @@ const YoutubeDownloader = () => {
       formatStr = `video:${resOpt.format}`;
     }
 
+    const endpoint = scope === 'playlist' ? '/api/ytdl/collection-download' : '/api/ytdl/download';
     const eventSource = new EventSource(
-      `/api/ytdl/download?url=${encodeURIComponent(url)}&format=${encodeURIComponent(formatStr)}`
+      endpoint + '?url=' + encodeURIComponent(url) + '&format=' + encodeURIComponent(formatStr)
     );
 
     eventSource.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        if (data.progress !== undefined) {
-          setProgress(data.progress);
+        if (data.progress !== undefined) setProgress(data.progress);
+        if (data.status) setDownloadStatus(data.status);
+        if (data.currentItem && data.totalItems) {
+          setDownloadStatus('Se descarcă piesa ' + data.currentItem + ' din ' + data.totalItems);
+        }
+        if (data.error) {
+          eventSource.close();
+          setDownloading(false);
+          setError(data.error);
+          return;
         }
         if (data.done) {
           eventSource.close();
@@ -132,15 +172,15 @@ const YoutubeDownloader = () => {
     setProgress(0);
     setFinalFilename('');
     setError(null);
+    setDownloadScope('single');
+    setDownloadStatus('');
   };
 
   return (
     <div className="ytdl-page">
-      {/* Animated background blobs */}
       <div className="ytdl-bg-glow" />
 
       <div className="ytdl-layout">
-        {/* Header */}
         <motion.header
           initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -161,7 +201,6 @@ const YoutubeDownloader = () => {
           )}
         </motion.header>
 
-        {/* URL Input */}
         <motion.div
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -190,7 +229,6 @@ const YoutubeDownloader = () => {
           </button>
         </motion.div>
 
-        {/* Error */}
         <AnimatePresence>
           {error && (
             <motion.div
@@ -204,7 +242,6 @@ const YoutubeDownloader = () => {
           )}
         </AnimatePresence>
 
-        {/* Skeleton */}
         <AnimatePresence>
           {loadingInfo && (
             <motion.div
@@ -223,7 +260,6 @@ const YoutubeDownloader = () => {
           )}
         </AnimatePresence>
 
-        {/* Main Editor Card */}
         <AnimatePresence>
           {info && !loadingInfo && (
             <motion.div
@@ -233,7 +269,6 @@ const YoutubeDownloader = () => {
               transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
               className="ytdl-main-card"
             >
-              {/* Preview Section */}
               <div className="ytdl-preview-section">
                 <div className="ytdl-thumbnail-wrapper">
                   <img src={info.thumbnail} alt="thumbnail" className="ytdl-thumbnail" />
@@ -253,132 +288,164 @@ const YoutubeDownloader = () => {
                       <Clock size={14} /> {formatDuration(info.duration)}
                     </span>
                   </div>
+                  {info.playlist && (
+                    <div className="ytdl-playlist-note">
+                      <ListVideo size={16} />
+                      <span>
+                        Playlist: <strong>{info.playlist.title}</strong> · {info.playlist.downloadableCount} videoclipuri
+                        {info.playlist.isTruncated && <span> (Limitat la primele 1000)</span>}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Options Section */}
-              <div className="ytdl-options-section">
-                <div className="ytdl-type-tabs">
-                  <button
-                    className={`ytdl-type-tab ${mediaType === 'video' ? 'active' : ''}`}
-                    onClick={() => setMediaType('video')}
-                    disabled={downloading}
+              <AnimatePresence>
+                {showOptionsModal && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="ytdl-modal-overlay"
                   >
-                    <MonitorPlay size={18} /> Video (MP4)
-                  </button>
-                  <button
-                    className={`ytdl-type-tab ${mediaType === 'audio' ? 'active' : ''}`}
-                    onClick={() => setMediaType('audio')}
-                    disabled={downloading}
-                  >
-                    <Headphones size={18} /> Audio (MP3)
-                  </button>
-                </div>
-
-                <div className="ytdl-formats-grid">
-                  {mediaType === 'video' ? (
-                    RESOLUTIONS.map(resOpt => {
-                      const isAvailable = true; // info.formats...
-                      return (
-                        <div
-                          key={resOpt.id}
-                          onClick={() => !downloading && setSelectedRes(resOpt.id)}
-                          className={`ytdl-format-card ${selectedRes === resOpt.id ? 'selected' : ''}`}
-                          style={{ opacity: isAvailable ? 1 : 0.4 }}
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                      className="ytdl-modal"
+                    >
+                      <h3 className="ytdl-modal-title">Setări descărcare</h3>
+                      <div className="ytdl-type-tabs">
+                        <button
+                          className={`ytdl-type-tab ${mediaType === 'video' ? 'active' : ''}`}
+                          onClick={() => setMediaType('video')}
                         >
-                          <div className="ytdl-format-label">{resOpt.label}</div>
-                          <div className="ytdl-format-sub">{resOpt.sub}</div>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    AUDIO_FORMATS.map(af => (
-                      <div
-                        key={af.id}
-                        onClick={() => !downloading && setSelectedAudio(af.id)}
-                        className={`ytdl-format-card ${selectedAudio === af.id ? 'selected' : ''}`}
-                      >
-                        <div className="ytdl-format-label">{af.label}</div>
-                        <div className="ytdl-format-sub">{af.sub}</div>
+                          <MonitorPlay size={18} /> Video (MP4)
+                        </button>
+                        <button
+                          className={`ytdl-type-tab ${mediaType === 'audio' ? 'active' : ''}`}
+                          onClick={() => setMediaType('audio')}
+                        >
+                          <Headphones size={18} /> Audio
+                        </button>
                       </div>
-                    ))
-                  )}
-                </div>
+                      <div className="ytdl-formats-grid">
+                        {mediaType === 'video' ? (
+                          RESOLUTIONS.map(resOpt => (
+                            <div
+                              key={resOpt.id}
+                              onClick={() => setSelectedRes(resOpt.id)}
+                              className={`ytdl-format-card ${selectedRes === resOpt.id ? 'selected' : ''}`}
+                            >
+                              <div className="ytdl-format-label">{resOpt.label}</div>
+                              <div className="ytdl-format-sub">{resOpt.sub}</div>
+                            </div>
+                          ))
+                        ) : (
+                          AUDIO_FORMATS.map(af => (
+                            <div
+                              key={af.id}
+                              onClick={() => setSelectedAudio(af.id)}
+                              className={`ytdl-format-card ${selectedAudio === af.id ? 'selected' : ''}`}
+                            >
+                              <div className="ytdl-format-label">{af.label}</div>
+                              <div className="ytdl-format-sub">{af.sub}</div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                      <div className="ytdl-modal-actions">
+                        <button className="ytdl-modal-cancel" onClick={() => setShowOptionsModal(false)}>
+                          Anulează
+                        </button>
+                        <button className="ytdl-modal-confirm" onClick={startDownload}>
+                          Începe descărcarea
+                        </button>
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-                {/* Download Action Area */}
-                <div className="ytdl-action-area">
-                  <AnimatePresence mode="wait">
-                    {!downloadComplete && !downloading && (
+              <div className="ytdl-action-area">
+                <AnimatePresence mode="wait">
+                  {!downloadComplete && !downloading && (
+                    <div className={info.playlist ? 'ytdl-dl-actions' : ''}>
                       <motion.button
                         key="btn-dl"
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
-                        className="ytdl-dl-btn"
-                        onClick={startDownload}
+                        className={`ytdl-dl-btn ${info.playlist ? 'ytdl-single-dl-btn' : ''}`}
+                        onClick={() => openDownloadModal('single')}
                       >
-                        <Download size={22} /> Descarcă acum
+                        <Download size={22} /> {info.playlist ? 'Descarcă un videoclip' : 'Descarcă acum'}
                       </motion.button>
-                    )}
+                      {info.playlist && (
+                        <button className="ytdl-dl-btn ytdl-playlist-dl-btn" onClick={() => openDownloadModal('playlist')}>
+                          <ListVideo size={22} /> Descarcă playlistul ({info.playlist.downloadableCount})
+                        </button>
+                      )}
+                    </div>
+                  )}
 
-                    {downloading && (
-                      <motion.div
-                        key="progress"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="ytdl-progress-block"
-                      >
-                        <div className="ytdl-progress-header">
-                          <span className="ytdl-progress-label">
-                            <Loader2 className="spin" size={16} /> Se procesează și se descarcă...
-                          </span>
-                          <span>{progress.toFixed(1)}%</span>
-                        </div>
-                        <div className="ytdl-progress-track">
-                          <motion.div
-                            className="ytdl-progress-fill"
-                            initial={{ width: 0 }}
-                            animate={{ width: `${progress}%` }}
-                            transition={{ ease: 'linear' }}
+                  {downloading && (
+                    <motion.div
+                      key="progress"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="ytdl-progress-block"
+                    >
+                      <div className="ytdl-progress-header">
+                        <span className="ytdl-progress-label">
+                          <Loader2 className="spin" size={16} /> Se procesează și se descarcă...
+                        </span>
+                        <span>{progress.toFixed(1)}%</span>
+                      </div>
+                      {downloadStatus && <div className="ytdl-progress-detail">{downloadStatus}</div>}
+                      <div className="ytdl-progress-track">
+                        <motion.div
+                          className="ytdl-progress-fill"
+                          initial={{ width: 0 }}
+                          animate={{ width: `${progress}%` }}
+                          transition={{ ease: 'linear' }}
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {downloadComplete && finalFilename && (
+                    <motion.div
+                      key="complete"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="ytdl-complete-block"
+                    >
+                      <div className="ytdl-complete-icon"><CheckCircle2 size={32} /></div>
+                      <div className="ytdl-complete-info">
+                        <span className="ytdl-complete-title">Gata! Salvează fișierul:</span>
+                        <div className="ytdl-name-input-row">
+                          <input
+                            type="text"
+                            value={outputName}
+                            onChange={e => setOutputName(e.target.value)}
+                            placeholder="nume_fisier"
+                            className="ytdl-name-input"
                           />
+                          <a
+                            href={`/api/download-file?file=${encodeURIComponent(finalFilename)}&outName=${encodeURIComponent(outputName)}`}
+                            download
+                            className={`ytdl-save-btn ${!outputName.trim() ? 'disabled' : ''}`}
+                            onClick={e => { if (!outputName.trim()) e.preventDefault(); }}
+                          >
+                            <Save size={18} /> Salvează
+                          </a>
                         </div>
-                      </motion.div>
-                    )}
-
-                    {downloadComplete && finalFilename && (
-                      <motion.div
-                        key="complete"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="ytdl-complete-block"
-                      >
-                        <div className="ytdl-complete-icon"><CheckCircle2 size={32} /></div>
-                        <div className="ytdl-complete-info">
-                          <span className="ytdl-complete-title">Gata! Salvează fișierul:</span>
-                          <div className="ytdl-name-input-row">
-                            <input
-                              type="text"
-                              value={outputName}
-                              onChange={e => setOutputName(e.target.value)}
-                              placeholder="nume_fisier"
-                              className="ytdl-name-input"
-                            />
-                            <a
-                              href={`/api/download-file?file=${encodeURIComponent(finalFilename)}&outName=${encodeURIComponent(outputName)}`}
-                              download={`${outputName}.${mediaType === 'audio' ? 'mp3' : 'mp4'}`}
-                              className={`ytdl-save-btn ${!outputName.trim() ? 'disabled' : ''}`}
-                              onClick={e => { if (!outputName.trim()) e.preventDefault(); }}
-                            >
-                              <Save size={18} /> Salvează
-                            </a>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </motion.div>
           )}
