@@ -1236,7 +1236,8 @@ const collectionDownloaderPlugin = () => ({
       previewTracks: collection.tracks.slice(0, 5).map(track => ({
         title: track.title,
         artist: track.artist,
-        duration_ms: track.duration_ms
+        duration_ms: track.duration_ms,
+        coverUrl: track.coverUrl
       }))
     })
 
