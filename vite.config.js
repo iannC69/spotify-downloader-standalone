@@ -867,15 +867,6 @@ const collectionDownloaderPlugin = () => ({
       const data = await response.json()
       if (!response.ok) {
         const msg = data.error?.message || ''
-        // Spotify returns this when the playlist is private or requires a user login
-        if (response.status === 401 || response.status === 403 ||
-            msg.toLowerCase().includes('authentication') ||
-            msg.toLowerCase().includes('valid user')) {
-          throw new Error(
-            'Acest playlist este privat sau necesită autentificare Spotify. ' +
-            'Asigură-te că linkul este public și încearcă din nou.'
-          )
-        }
         throw new Error(msg || 'Spotify nu a putut citi acest link.')
       }
       return data
@@ -898,11 +889,12 @@ const collectionDownloaderPlugin = () => ({
         const page = await spotifyRequest(token, next)
         const pageTracks = (page.items || [])
           .map(item => {
-            // Handle new /items endpoint structure: item contains the track data
-            const track = item?.item || item?.track || item
-            if (!track) return null
+            // /tracks endpoint wraps track in item.track; fall back to item itself for album tracks
+            const track = item?.track || item
+            if (!track || typeof track !== 'object') return null
             if (track.type === 'episode') return null
             if (track.is_local) return null
+            if (!track.name) return null
             return track
           })
           .filter(Boolean)
@@ -935,7 +927,7 @@ const collectionDownloaderPlugin = () => ({
 
       if (resource.type === 'playlist') {
         const playlist = await spotifyRequest(token, '/playlists/' + resource.id)
-        const tracks = await fetchSpotifyTracks(token, '/playlists/' + resource.id + '/items?limit=50')
+        const tracks = await fetchSpotifyTracks(token, '/playlists/' + resource.id + '/tracks?limit=100')
         return {
           kind: 'playlist',
           title: playlist.name || 'Spotify Playlist',
