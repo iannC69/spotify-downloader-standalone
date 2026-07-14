@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Download, Loader2, AlertCircle, CheckCircle2,
   Zap, Disc, Music2, Clock, Link2, RefreshCw, Save, Archive,
-  LogIn, LogOut, ListMusic, ChevronRight, User
+  LogIn, LogOut, ListMusic, ChevronRight, User, TrendingUp
 } from 'lucide-react';
 import './SpotifyDownloader.css';
 
@@ -58,6 +58,11 @@ const SpotifyDownloader = () => {
   const [loadingPlaylists, setLoadingPlaylists] = useState(true);
   const [showPlaylists, setShowPlaylists] = useState(false);
 
+  // Top tracks state
+  const [topTracks, setTopTracks] = useState([]);
+  const [loadingTopTracks, setLoadingTopTracks] = useState(false);
+  const [showTopTracks, setShowTopTracks] = useState(false);
+
   // Check login status on mount
   useEffect(() => {
     const checkLogin = async () => {
@@ -82,6 +87,22 @@ const SpotifyDownloader = () => {
     checkLogin();
   }, []);
 
+  const handleFetchTopTracks = useCallback(async () => {
+    setLoadingTopTracks(true);
+    try {
+      const res = await fetch('/api/spotify/top-tracks?time_range=medium_term&limit=50');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to fetch top tracks');
+      setTopTracks(data.tracks || []);
+      setShowTopTracks(true);
+      setShowPlaylists(false);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoadingTopTracks(false);
+    }
+  }, []);
+
   const handleSelectPlaylist = useCallback(async (playlistUrl) => {
     setUrl(playlistUrl);
     setInfo(null);
@@ -90,6 +111,7 @@ const SpotifyDownloader = () => {
     setError(null);
     setDownloadStatus('');
     setShowPlaylists(false);
+    setShowTopTracks(false);
 
     // auto-fetch info
     setLoadingInfo(true);
@@ -120,6 +142,7 @@ const SpotifyDownloader = () => {
       const res = await fetch('/api/spotify/collection-info?url=' + encodeURIComponent(url));
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to fetch info');
+      console.log('Track data received:', data.previewTracks?.[0]);
       setInfo(data);
       const nameSource = data.kind === 'track' ? data.artist + ' - ' + data.title : data.title;
       const safeName = nameSource.replace(/[^a-zA-Z0-9 _-]/g, '').trim().slice(0, 80);
@@ -235,18 +258,27 @@ const SpotifyDownloader = () => {
             )}
             {!loadingPlaylists && (
               isLoggedIn && userProfile ? (
-                <button
-                  className="spdl-profile-btn"
-                  onClick={() => setShowPlaylists(v => !v)}
-                  title="Playlisturile mele"
-                >
-                  {userProfile.images?.[0]?.url
-                    ? <img src={userProfile.images[0].url} alt={userProfile.display_name} className="spdl-avatar" />
-                    : <User size={16} />
-                  }
-                  <span className="spdl-profile-name">{userProfile.display_name}</span>
-                  <ChevronRight size={14} className={`spdl-chevron ${showPlaylists ? 'rotated' : ''}`} />
-                </button>
+                <>
+                  <button
+                    className="spdl-reset-btn"
+                    onClick={handleFetchTopTracks}
+                    title="Piesele mele ascultate"
+                  >
+                    <TrendingUp size={16} />
+                  </button>
+                  <button
+                    className="spdl-profile-btn"
+                    onClick={() => setShowPlaylists(v => !v)}
+                    title="Playlisturile mele"
+                  >
+                    {userProfile.images?.[0]?.url
+                      ? <img src={userProfile.images[0].url} alt={userProfile.display_name} className="spdl-avatar" />
+                      : <User size={16} />
+                    }
+                    <span className="spdl-profile-name">{userProfile.display_name}</span>
+                    <ChevronRight size={14} className={`spdl-chevron ${showPlaylists ? 'rotated' : ''}`} />
+                  </button>
+                </>
               ) : (
                 <a href="/api/spotify/login" className="spdl-login-btn">
                   <LogIn size={16} />
@@ -287,6 +319,56 @@ const SpotifyDownloader = () => {
                     <div className="spdl-playlist-info">
                       <span className="spdl-playlist-name">{pl.name}</span>
                       <span className="spdl-playlist-count">{pl.tracks?.total ?? 0} piese</span>
+                    </div>
+                    <Download size={14} className="spdl-playlist-dl-icon" />
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Top Tracks Panel */}
+        <AnimatePresence>
+          {isLoggedIn && showTopTracks && (
+            <motion.div
+              initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+              animate={{ opacity: 1, height: 'auto', marginBottom: '1.5rem' }}
+              exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+              transition={{ duration: 0.35, ease: 'easeInOut' }}
+              className="spdl-playlists-panel"
+            >
+              <div className="spdl-playlists-header">
+                <TrendingUp size={16} />
+                <span>Piesele mele ascultate ({topTracks.length})</span>
+              </div>
+              <div className="spdl-playlists-grid">
+                {topTracks.map((track, index) => (
+                  <button
+                    key={`${track.title}-${index}`}
+                    className="spdl-playlist-card"
+                    onClick={() => {
+                      setUrl('');
+                      setInfo({
+                        kind: 'track',
+                        title: track.title,
+                        artist: track.artist,
+                        album: track.album,
+                        coverUrl: track.coverUrl,
+                        duration_ms: track.duration_ms
+                      });
+                      setShowTopTracks(false);
+                    }}
+                  >
+                    <div className="spdl-playlist-img">
+                      {track.coverUrl
+                        ? <img src={track.coverUrl} alt={track.title} />
+                        : <Music2 size={28} />
+                      }
+                    </div>
+                    <div className="spdl-playlist-info">
+                      <span className="spdl-playlist-name">{track.title}</span>
+                      <span className="spdl-playlist-count">{track.artist}</span>
                     </div>
                     <Download size={14} className="spdl-playlist-dl-icon" />
                   </button>
@@ -383,8 +465,19 @@ const SpotifyDownloader = () => {
                   <ol>
                     {info.previewTracks?.map((track, index) => (
                       <li key={`${track.title}-${index}`}>
-                        <span>{track.title}</span>
-                        <small>{track.artist}{track.duration_ms ? ` · ${formatDuration(track.duration_ms)}` : ''}</small>
+                        <div className="spdl-track-item">
+                          {track.coverUrl && (
+                            <img 
+                              src={track.coverUrl} 
+                              alt={track.title} 
+                              className="spdl-track-cover"
+                            />
+                          )}
+                          <div className="spdl-track-info">
+                            <span className="spdl-track-title">{track.title}</span>
+                            <small>{track.artist}{track.duration_ms ? ` · ${formatDuration(track.duration_ms)}` : ''}</small>
+                          </div>
+                        </div>
                       </li>
                     ))}
                   </ol>

@@ -549,14 +549,47 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.4rem 0;
+  padding: 0.3rem 0;
   border-bottom: 1px solid #1a1a1a;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
 }
 
 .spdl-collection-preview li:last-child { border-bottom: none; }
 .spdl-collection-preview li span { color: #e0e0e0; }
 .spdl-collection-preview li small { color: #535353; font-size: 0.75rem; }
+
+.spdl-track-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+}
+
+.spdl-track-cover {
+  width: 36px;
+  height: 36px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: #1a1a1a;
+}
+
+.spdl-track-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.spdl-track-title {
+  color: #e0e0e0;
+  font-weight: 500;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* Archive Note */
 .spdl-archive-note {
