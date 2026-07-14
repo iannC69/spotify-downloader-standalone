@@ -827,7 +827,9 @@ const collectionDownloaderPlugin = () => ({
       })
     })
 
-    // ======== SPOTIFY TOKEN — CLIENT CREDENTIALS (standalone, no login needed) ========
+    // ======== SPOTIFY TOKEN ========
+    // Prefers SPOTIFY_REFRESH_TOKEN (user-scoped — works for playlists) when set in .env.
+    // Falls back to client_credentials (app-only — works for tracks/albums, NOT playlists).
     const getSpotifyToken = async () => {
       if (spotifyUserTokenCache.token && Date.now() < spotifyUserTokenCache.expiresAt - 300_000) {
         return spotifyUserTokenCache.token
@@ -835,19 +837,26 @@ const collectionDownloaderPlugin = () => ({
 
       const clientId = process.env.SPOTIFY_CLIENT_ID
       const clientSecret = process.env.SPOTIFY_CLIENT_SECRET
+      const refreshToken = process.env.SPOTIFY_REFRESH_TOKEN
 
       if (!clientId || !clientSecret) {
         throw new Error('Lipsesc SPOTIFY_CLIENT_ID / SPOTIFY_CLIENT_SECRET din fișierul .env.')
       }
 
       const basic = Buffer.from(clientId + ':' + clientSecret).toString('base64')
+      // Prefer refresh_token — gives user-scoped access (required for playlist tracks).
+      // Falls back to client_credentials if no refresh token is configured.
+      const body = refreshToken
+        ? new URLSearchParams({ grant_type: 'refresh_token', refresh_token: refreshToken })
+        : new URLSearchParams({ grant_type: 'client_credentials' })
+
       const response = await fetch('https://accounts.spotify.com/api/token', {
         method: 'POST',
         headers: {
           Authorization: 'Basic ' + basic,
           'Content-Type': 'application/x-www-form-urlencoded'
         },
-        body: new URLSearchParams({ grant_type: 'client_credentials' })
+        body
       })
       const data = await response.json()
       if (!response.ok) {
@@ -857,6 +866,7 @@ const collectionDownloaderPlugin = () => ({
       spotifyUserTokenCache.expiresAt = Date.now() + (data.expires_in || 3600) * 1000
       return data.access_token
     }
+
 
 
     const spotifyRequest = async (token, endpoint) => {
