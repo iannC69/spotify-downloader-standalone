@@ -914,6 +914,56 @@ const collectionDownloaderPlugin = () => ({
       return tracks
     }
 
+    const scrapeSpotifyPlaylist = async (id) => {
+      console.log('Folosesc fallback-ul HTML pentru playlist-ul Spotify...')
+      const res = await fetch('https://open.spotify.com/playlist/' + id)
+      const html = await res.text()
+      const startTag = '<script id="initialState" type="text/plain">'
+      const endTag = '</script>'
+      const startIndex = html.indexOf(startTag)
+      if (startIndex === -1) throw new Error('Nu am putut citi playlist-ul (HTML protejat).')
+      
+      const contentStart = startIndex + startTag.length
+      const contentEnd = html.indexOf(endTag, contentStart)
+      const b64 = html.substring(contentStart, contentEnd)
+      const data = JSON.parse(Buffer.from(b64, 'base64').toString('utf8'))
+      
+      const plData = data.entities?.items?.[`spotify:playlist:${id}`]
+      if (!plData) throw new Error('Playlistul nu a fost găsit în datele descărcate.')
+      
+      const items = plData.content?.items || []
+      const tracks = []
+      const seen = new Set()
+      
+      for (const item of items) {
+        const trackNode = item.itemV2?.data
+        if (!trackNode || trackNode.__typename !== 'Track') continue
+        const uri = trackNode.uri
+        if (uri && !seen.has(uri)) {
+          seen.add(uri)
+          tracks.push({
+            title: trackNode.name || 'Unknown',
+            artist: (trackNode.artists?.items || []).map(a => a.profile?.name).join(', ') || 'Artist necunoscut',
+            album: trackNode.albumOfTrack?.name || '',
+            coverUrl: trackNode.albumOfTrack?.coverArt?.sources?.[0]?.url || '',
+            duration_ms: trackNode.duration?.totalMilliseconds || 0,
+            trackNumber: trackNode.trackNumber || 0
+          })
+        }
+      }
+      
+      return {
+        kind: 'playlist',
+        title: plData.name || 'Spotify Playlist',
+        artist: plData.ownerV2?.data?.name || 'Spotify',
+        album: '',
+        coverUrl: plData.images?.items?.[0]?.sources?.[0]?.url || '',
+        duration_ms: 0,
+        trackCount: tracks.length,
+        tracks
+      }
+    }
+
     const getSpotifyCollection = async (spotifyUrl) => {
       const resource = extractSpotifyResource(spotifyUrl)
       console.log('Resource extras:', resource)
@@ -936,17 +986,11 @@ const collectionDownloaderPlugin = () => ({
       }
 
       if (resource.type === 'playlist') {
-        const playlist = await spotifyRequest(token, '/playlists/' + resource.id)
-        const tracks = await fetchSpotifyTracks(token, '/playlists/' + resource.id + '/tracks?limit=100')
-        return {
-          kind: 'playlist',
-          title: playlist.name || 'Spotify Playlist',
-          artist: playlist.owner?.display_name || 'Spotify',
-          album: '',
-          coverUrl: playlist.images?.[0]?.url || '',
-          duration_ms: 0,
-          trackCount: Number(playlist.tracks?.total || tracks.length),
-          tracks
+        try {
+          return await scrapeSpotifyPlaylist(resource.id)
+        } catch (e) {
+          console.error('Eroare fallback scraper playlist:', e)
+          throw new Error('Nu am putut citi playlist-ul. Este posibil ca profilul sau playlist-ul să fie privat, sau link-ul este greșit.')
         }
       }
 
