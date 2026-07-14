@@ -182,241 +182,6 @@ const igdbAdminPlugin = () => ({
     });
   }
 });
-
-const spotifyPlugin = () => ({
-  name: 'spotify-plugin',
-  configureServer(server) {
-    const getSpotifyAccessToken = async () => {
-      const clientId = process.env.SPOTIFY_CLIENT_ID;
-      const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
-      const refreshToken = process.env.SPOTIFY_REFRESH_TOKEN;
-
-      if (!clientId || !clientSecret || !refreshToken) {
-        throw new Error('Missing Spotify keys or refresh token in .env');
-      }
-
-      const basic = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
-      const response = await fetch('https://accounts.spotify.com/api/token', {
-        method: 'POST',
-        headers: {
-          Authorization: `Basic ${basic}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          grant_type: 'refresh_token',
-          refresh_token: refreshToken,
-        }),
-      });
-
-      const data = await response.json();
-      return data.access_token;
-    };
-
-    server.middlewares.use('/api/spotify/login', (req, res, next) => {
-      if (req.url !== '/') return next();
-      const clientId = process.env.SPOTIFY_CLIENT_ID;
-      if (!clientId) {
-        res.statusCode = 400;
-        return res.end('Lipseste SPOTIFY_CLIENT_ID in .env');
-      }
-      const redirectUri = 'http://127.0.0.1:5173/callback';
-      const scope = 'user-top-read playlist-read-private user-read-private user-follow-read';
-      const url = `https://accounts.spotify.com/authorize?response_type=code&client_id=${clientId}&scope=${encodeURIComponent(scope)}&redirect_uri=${encodeURIComponent(redirectUri)}`;
-      res.statusCode = 302;
-      res.setHeader('Location', url);
-      res.end();
-    });
-
-    server.middlewares.use('/callback', async (req, res, next) => {
-      const url = new URL(req.url, `http://${req.headers.host}`);
-      if (url.pathname !== '/') return next();
-
-      const code = url.searchParams.get('code');
-      const clientId = process.env.SPOTIFY_CLIENT_ID;
-      const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
-      const redirectUri = 'http://127.0.0.1:5173/callback';
-
-      if (!code) return res.end('No code provided');
-
-      try {
-        const basic = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
-        const response = await fetch('https://accounts.spotify.com/api/token', {
-          method: 'POST',
-          headers: {
-            Authorization: `Basic ${basic}`,
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: new URLSearchParams({
-            grant_type: 'authorization_code',
-            code,
-            redirect_uri: redirectUri,
-          }),
-        });
-
-        const data = await response.json();
-        if (data.refresh_token) {
-          const envPath = path.resolve(__dirname, '.env');
-          let envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
-          if (envContent.includes('SPOTIFY_REFRESH_TOKEN=')) {
-            envContent = envContent.replace(/SPOTIFY_REFRESH_TOKEN=.*/, `SPOTIFY_REFRESH_TOKEN=${data.refresh_token}`);
-          } else {
-            envContent += `\nSPOTIFY_REFRESH_TOKEN=${data.refresh_token}\n`;
-          }
-          fs.writeFileSync(envPath, envContent);
-          process.env.SPOTIFY_REFRESH_TOKEN = data.refresh_token;
-        }
-
-        if (data.access_token) {
-          spotifyUserTokenCache.token = data.access_token;
-          spotifyUserTokenCache.expiresAt = Date.now() + (data.expires_in || 3600) * 1000;
-        }
-
-        res.statusCode = 302;
-        res.setHeader('Location', '/');
-        res.end();
-      } catch (err) {
-        console.error(err);
-        res.statusCode = 500;
-        res.end('Error during Spotify auth');
-      }
-    });
-
-    server.middlewares.use('/api/spotify/data', async (req, res, next) => {
-      if (req.url !== '/') return next();
-
-      try {
-        const token = await getSpotifyAccessToken();
-        const authHeaders = { Authorization: `Bearer ${token}` };
-
-        const fetchSpotifyJson = async url => {
-          const response = await fetch(url, { headers: authHeaders });
-
-          let data;
-          const contentType = response.headers.get('content-type') || '';
-          if (contentType.includes('application/json')) {
-            data = await response.json();
-          } else {
-            const text = await response.text();
-            try { data = JSON.parse(text); } catch { data = { error: { message: text || 'Spotify request failed' } }; }
-          }
-
-          if (!response.ok) {
-            const spotifyMessage = data?.error?.message || data?.error || 'Spotify request failed';
-            const error = new Error(spotifyMessage);
-            error.status = response.status;
-            throw error;
-          }
-
-          return data;
-        };
-
-        const fetchAllPlaylists = async () => {
-          const items = [];
-          let nextUrl = 'https://api.spotify.com/v1/me/playlists?limit=50&fields=items(id,name,images,tracks,external_urls,public,owner),next';
-
-          while (nextUrl) {
-            const page = await fetchSpotifyJson(nextUrl);
-            items.push(...(page.items || []));
-            nextUrl = page.next;
-          }
-
-          return items;
-        };
-
-        const fetchFollowedArtists = async () => {
-          const items = [];
-          let nextUrl = 'https://api.spotify.com/v1/me/following?type=artist&limit=50';
-
-          while (nextUrl) {
-            const page = await fetchSpotifyJson(nextUrl);
-            const artistPage = page.artists || {};
-            items.push(...(artistPage.items || []));
-            nextUrl = artistPage.next;
-          }
-
-          return items;
-        };
-
-        const spotifyWarnings = {};
-
-        let profile = null;
-        try {
-          profile = await fetchSpotifyJson('https://api.spotify.com/v1/me');
-        } catch (err) {
-          spotifyWarnings.profile = err.message;
-        }
-
-        let topArtistsItems = [];
-        try {
-          const topArtists = await fetchSpotifyJson('https://api.spotify.com/v1/me/top/artists?time_range=short_term&limit=50');
-          topArtistsItems = topArtists.items || [];
-        } catch (err) {
-          spotifyWarnings.topArtists = err.status === 403 || (err.message && err.message.toLowerCase().includes('premium'))
-            ? 'Top artists necesita un cont Spotify Premium.'
-            : err.message;
-        }
-
-        let playlists = [];
-        try {
-          playlists = await fetchAllPlaylists();
-        } catch (err) {
-          spotifyWarnings.playlists = err.status === 403 || (err.message && err.message.toLowerCase().includes('premium'))
-            ? 'Playlists necesita un cont Spotify Premium.'
-            : err.message;
-        }
-
-        let followedArtists = [];
-        try {
-          followedArtists = await fetchFollowedArtists();
-        } catch (err) {
-          spotifyWarnings.followedArtists = err.status === 403
-            ? 'Reconecteaza Spotify pentru a permite accesul la artistii urmariti.'
-            : err.message;
-        }
-
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify({
-          profile,
-          topArtists: topArtistsItems,
-          playlists,
-          followedArtists,
-          spotifyWarnings
-        }));
-      } catch (err) {
-        res.statusCode = 500;
-        res.end(JSON.stringify({ error: err.message }));
-      }
-    });
-
-    server.middlewares.use('/api/spotify/search', async (req, res, next) => {
-      const urlObj = new URL(req.url, `http://${req.headers.host}`);
-      if (urlObj.pathname !== '/') return next();
-
-      const query = urlObj.searchParams.get('q');
-      if (!query) {
-        res.statusCode = 400;
-        return res.end(JSON.stringify({ error: 'No query provided' }));
-      }
-
-      try {
-        const token = await getSpotifyAccessToken();
-        const response = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=artist`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const data = await response.json();
-
-        if (!response.ok) throw new Error(data.error?.message || 'Search failed');
-
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify(data.artists?.items || []));
-      } catch (err) {
-        res.statusCode = 500;
-        res.end(JSON.stringify({ error: err.message }));
-      }
-    });
-  }
-});
-
 const ytdlpPlugin = () => ({
   name: 'ytdlp-plugin',
   configureServer(server) {
@@ -1062,82 +827,60 @@ const collectionDownloaderPlugin = () => ({
       })
     })
 
-    // ======== FUNCȚIA GET SPOTIFY TOKEN - FOLOSEȘTE REFRESH TOKEN CU SCOPURI ========
+    // ======== SPOTIFY TOKEN — CLIENT CREDENTIALS (standalone, no login needed) ========
     const getSpotifyToken = async () => {
-      console.log('\n=== GET SPOTIFY TOKEN ===')
-      console.log('Cache token:', spotifyUserTokenCache.token ? '✅ existent' : '❌ lipsă')
-      console.log('Cache expiră la:', new Date(spotifyUserTokenCache.expiresAt).toLocaleString())
-
       if (spotifyUserTokenCache.token && Date.now() < spotifyUserTokenCache.expiresAt - 300_000) {
-        console.log('Folosesc token din cache')
         return spotifyUserTokenCache.token
       }
 
       const clientId = process.env.SPOTIFY_CLIENT_ID
       const clientSecret = process.env.SPOTIFY_CLIENT_SECRET
-      const refreshToken = process.env.SPOTIFY_REFRESH_TOKEN
-
-      console.log('Client ID:', clientId ? '✅ SETAT' : '❌ LIPSĂ')
-      console.log('Client Secret:', clientSecret ? '✅ SETAT' : '❌ LIPSĂ')
-      console.log('Refresh Token:', refreshToken ? '✅ SETAT' : '❌ LIPSĂ')
 
       if (!clientId || !clientSecret) {
-        throw new Error('Lipsesc cheile Spotify din fișierul .env.')
-      }
-
-      if (!refreshToken) {
-        throw new Error(
-          'Lipsește SPOTIFY_REFRESH_TOKEN. Conectează-te prin butonul "Conectează-te" pentru a-l genera.'
-        )
+        throw new Error('Lipsesc SPOTIFY_CLIENT_ID / SPOTIFY_CLIENT_SECRET din fișierul .env.')
       }
 
       const basic = Buffer.from(clientId + ':' + clientSecret).toString('base64')
-      // Folosește refresh_token pentru a obține un token cu scopurile utilizatorului
-      const body = new URLSearchParams({
-        grant_type: 'refresh_token',
-        refresh_token: refreshToken
+      const response = await fetch('https://accounts.spotify.com/api/token', {
+        method: 'POST',
+        headers: {
+          Authorization: 'Basic ' + basic,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({ grant_type: 'client_credentials' })
       })
-
-      try {
-        console.log('Trimit request către Spotify token endpoint (refresh_token)...')
-        const response = await fetch('https://accounts.spotify.com/api/token', {
-          method: 'POST',
-          headers: {
-            Authorization: 'Basic ' + basic,
-            'Content-Type': 'application/x-www-form-urlencoded'
-          },
-          body
-        })
-        const data = await response.json()
-        console.log('Răspuns token status:', response.status)
-        if (!response.ok) {
-          console.error('Eroare token Spotify:', data)
-          throw new Error(data.error_description || 'Nu am putut obține acces la Spotify.')
-        }
-
-        spotifyUserTokenCache.token = data.access_token
-        spotifyUserTokenCache.expiresAt = Date.now() + (data.expires_in || 3600) * 1000
-        console.log('✅ Token obținut cu succes, expiră la:', new Date(spotifyUserTokenCache.expiresAt).toLocaleString())
-        return data.access_token
-      } catch (err) {
-        console.error('❌ Eroare în getSpotifyToken:', err)
-        throw err
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error_description || 'Nu am putut obține acces la Spotify.')
       }
+      spotifyUserTokenCache.token = data.access_token
+      spotifyUserTokenCache.expiresAt = Date.now() + (data.expires_in || 3600) * 1000
+      return data.access_token
     }
+
 
     const spotifyRequest = async (token, endpoint) => {
       const url = endpoint.startsWith('http') ? endpoint : 'https://api.spotify.com/v1' + endpoint
-      console.log('Spotify request către:', url)
       const response = await fetch(url, {
         headers: { Authorization: 'Bearer ' + token }
       })
       const data = await response.json()
       if (!response.ok) {
-        console.error('Spotify API error:', data)
-        throw new Error(data.error?.message || 'Spotify nu a putut citi acest link.')
+        const msg = data.error?.message || ''
+        // Spotify returns this when the playlist is private or requires a user login
+        if (response.status === 401 || response.status === 403 ||
+            msg.toLowerCase().includes('authentication') ||
+            msg.toLowerCase().includes('valid user')) {
+          throw new Error(
+            'Acest playlist este privat sau necesită autentificare Spotify. ' +
+            'Asigură-te că linkul este public și încearcă din nou.'
+          )
+        }
+        throw new Error(msg || 'Spotify nu a putut citi acest link.')
       }
       return data
     }
+
 
     const spotifyTrack = (track, overrides = {}) => ({
       title: track.name,
@@ -1458,8 +1201,11 @@ const collectionDownloaderPlugin = () => ({
             return ''
           }
         }
-
         const outputFiles = []
+        const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
+        const MAX_RETRIES = 3
+        const DELAY_BETWEEN_TRACKS_MS = 1500
+
         for (let index = 0; index < total; index += 1) {
           const track = collection.tracks[index]
           const itemNumber = index + 1
@@ -1468,6 +1214,7 @@ const collectionDownloaderPlugin = () => ({
           const outputPath = path.join(jobDir, prefix + ' - ' + safeFilename(track.artist, 'Artist') + ' - ' + safeFilename(track.title, 'Track') + '.mp3')
           const coverPath = await getCover(track.coverUrl)
           const search = 'ytsearch1:' + track.artist + ' ' + track.title + ' audio'
+          const audioQuality = format.split(':')[1] || '0'
 
           sendSse(res, {
             progress: (index / total) * 90,
@@ -1477,26 +1224,64 @@ const collectionDownloaderPlugin = () => ({
             status: 'Se descarcă piesa ' + itemNumber + ' din ' + total + ': ' + track.title
           })
 
-          const audioQuality = format.split(':')[1] || '0'
+          // Retry loop — up to MAX_RETRIES attempts per track
+          let downloaded = false
+          for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+            try {
+              // Clean up any partial file from a previous attempt
+              try { if (fs.existsSync(rawPath)) fs.rmSync(rawPath, { force: true }) } catch { /* ignore */ }
 
-          await runProcess(binPath, [
-            '-x', '--audio-format', 'mp3', '--audio-quality', audioQuality,
-            '--ffmpeg-location', ffmpegPath,
-            '-o', rawPath,
-            search
-          ], text => {
-            const progressMatch = text.match(/\[download\]\s+([\d.]+)%/)
-            if (progressMatch) {
-              sendSse(res, {
-                progress: ((index + Number(progressMatch[1]) / 100) / total) * 90,
-                currentItem: itemNumber,
-                totalItems: total,
-                currentTitle: track.title,
-                status: 'Se descarcă piesa ' + itemNumber + ' din ' + total + ': ' + track.title
+              await runProcess(binPath, [
+                '-x', '--audio-format', 'mp3', '--audio-quality', audioQuality,
+                '--ffmpeg-location', ffmpegPath,
+                '-o', rawPath,
+                '--retries', '3',
+                search
+              ], text => {
+                const progressMatch = text.match(/\[download\]\s+([\d.]+)%/)
+                if (progressMatch) {
+                  sendSse(res, {
+                    progress: ((index + Number(progressMatch[1]) / 100) / total) * 90,
+                    currentItem: itemNumber,
+                    totalItems: total,
+                    currentTitle: track.title,
+                    status: 'Se descarcă piesa ' + itemNumber + ' din ' + total + ': ' + track.title
+                  })
+                }
               })
+
+              if (fs.existsSync(rawPath)) {
+                downloaded = true
+                break
+              } else {
+                throw new Error('Fișierul raw nu a fost creat.')
+              }
+            } catch (err) {
+              if (attempt < MAX_RETRIES) {
+                sendSse(res, {
+                  progress: (index / total) * 90,
+                  currentItem: itemNumber,
+                  totalItems: total,
+                  currentTitle: track.title,
+                  status: 'Reîncercare ' + attempt + '/' + MAX_RETRIES + ' pentru: ' + track.title
+                })
+                await delay(2000 * attempt) // exponential back-off
+              }
             }
-          })
-          if (!fs.existsSync(rawPath)) throw new Error('Fișierul pentru „' + track.title + '” nu a fost creat.')
+          }
+
+          if (!downloaded) {
+            sendSse(res, {
+              progress: ((index + 1) / total) * 90,
+              currentItem: itemNumber,
+              totalItems: total,
+              currentTitle: track.title,
+              status: '⚠ Piesa „' + track.title + '" a fost sărită după ' + MAX_RETRIES + ' încercări.'
+            })
+            try { if (fs.existsSync(rawPath)) fs.rmSync(rawPath, { force: true }) } catch { /* ignore */ }
+            await delay(DELAY_BETWEEN_TRACKS_MS)
+            continue
+          }
 
           const ffmpegArgs = ['-y', '-i', rawPath]
           if (coverPath && fs.existsSync(coverPath)) {
@@ -1519,6 +1304,9 @@ const collectionDownloaderPlugin = () => ({
             currentTitle: track.title,
             status: 'S-a pregătit piesa ' + itemNumber + ' din ' + total
           })
+
+          // Delay between tracks to avoid rate-limiting
+          if (index < total - 1) await delay(DELAY_BETWEEN_TRACKS_MS)
         }
 
         coverPaths.forEach(coverPath => {
@@ -1559,12 +1347,12 @@ export default defineConfig({
   plugins: [
     react(),
     igdbAdminPlugin(),
-    spotifyPlugin(),
     ytdlpPlugin(),
     fileDownloadPlugin(),
     spotifyDownloaderPlugin(),
     collectionDownloaderPlugin()
   ],
+
   server: {
     host: true,
   }

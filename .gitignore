@@ -25,3 +25,5 @@ dist-ssr
 bin/
 *.mp3
 temp.json  
+.env
+downloads/
